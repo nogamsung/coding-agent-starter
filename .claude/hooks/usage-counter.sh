@@ -3,16 +3,19 @@
 # PostToolUse hook — opt-in 사용량 집계 (로컬 .claude/.usage.json)
 #
 # 활성화 조건: .claude/settings.local.json 의 .telemetry == true
+#           또는 .claude/stacks.json 의 "harness": {"telemetry": true}  (Codex 는 settings.local.json 이 없으므로)
 # (디폴트 disabled — 게이팅 통과 못 하면 즉시 exit 0)
 #
 # 외부 전송 절대 없음. 로컬 파일만 누적. tool_name 만 기록 (input/output 내용 X).
 # 사용자 자기 작업 패턴 파악용. /memory 결정 근거.
 
 # --- opt-in 게이팅 ---
-if [ ! -f .claude/settings.local.json ] || ! command -v jq &>/dev/null; then
-  exit 0
-fi
-ENABLED=$(jq -r '.telemetry // false' .claude/settings.local.json 2>/dev/null)
+command -v jq &>/dev/null || exit 0
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+cd "$ROOT" 2>/dev/null || exit 0
+ENABLED=false
+[ -f .claude/settings.local.json ] && ENABLED=$(jq -r '.telemetry // false' .claude/settings.local.json 2>/dev/null)
+[ "$ENABLED" != "true" ] && harness_on telemetry false && ENABLED=true
 [ "$ENABLED" != "true" ] && exit 0
 
 # --- input 파싱 ---
