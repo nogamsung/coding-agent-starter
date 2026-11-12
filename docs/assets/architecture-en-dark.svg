@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 452" width="880" height="452" role="img" aria-label="One rule set read by both Claude Code and Codex">
+<title>One rule set read by both Claude Code and Codex</title>
+<style>
+svg{--bg:#0d1117;--card:#161b22;--line:#30363d;--text:#e6edf3;--muted:#9198a1;--claude:#e8916f;--codex:#a08bff;--green:#3fb950;--red:#f85149;--blue:#4493f8;--tint_claude:#3a2219;--tint_codex:#251f3d;--tint_green:#11291a;--tint_blue:#0f2340}
+.flow{animation:flow 2.4s linear infinite}@keyframes flow{from{stroke-dashoffset:170}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important} .motion{display:none} }
+</style>
+<rect width="880" height="452" rx="14" fill="var(--bg)" stroke="var(--line)"/>
+<text x="30" y="38" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="17" font-weight="650" fill="var(--text)" text-anchor="start">One set of rules, per-platform wiring</text>
+<rect x="30" y="60" width="300" height="280" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.5" />
+<text x="48" y="86" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="13" font-weight="600" fill="var(--muted)" text-anchor="start">Source (edit only here)</text>
+<rect x="46" y="100" width="268" height="48" rx="10" fill="var(--bg)" stroke="var(--line)" stroke-width="1" />
+<text x="60" y="121" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="var(--text)" text-anchor="start">AGENTS.md</text>
+<text x="60" y="138" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">one instruction file</text>
+<rect x="46" y="158" width="268" height="48" rx="10" fill="var(--bg)" stroke="var(--line)" stroke-width="1" />
+<text x="60" y="179" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="var(--text)" text-anchor="start">.agents/skills/</text>
+<text x="60" y="196" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">skill sources</text>
+<rect x="46" y="216" width="268" height="48" rx="10" fill="var(--bg)" stroke="var(--line)" stroke-width="1" />
+<text x="60" y="237" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="var(--text)" text-anchor="start">.claude/agents/*.md</text>
+<text x="60" y="254" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">subagent sources</text>
+<rect x="46" y="274" width="268" height="48" rx="10" fill="var(--bg)" stroke="var(--line)" stroke-width="1" />
+<text x="60" y="295" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="var(--text)" text-anchor="start">.claude/hooks/</text>
+<text x="60" y="312" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">one set of hook scripts</text>
+<rect x="510" y="60" width="340" height="136" rx="10" fill="var(--tint_claude)" stroke="var(--claude)" stroke-width="1.5" />
+<text x="528" y="86" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="15" font-weight="700" fill="var(--claude)" text-anchor="start">Claude Code</text>
+<text x="528" y="110" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">AGENTS.md</text>
+<text x="700" y="110" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">read directly</text>
+<text x="528" y="132" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">.claude/skills →</text>
+<text x="700" y="132" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">symlink</text>
+<text x="528" y="154" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">.claude/agents/*.md</text>
+<text x="700" y="154" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">as is</text>
+<text x="528" y="176" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">settings.json</text>
+<text x="700" y="176" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">→ calls hooks</text>
+<path d="M330 128 H500" stroke="var(--line)" stroke-width="2" fill="none"/>
+<path d="M330 128 H500" stroke="var(--claude)" stroke-width="2.5" fill="none" stroke-dasharray="10 160" class="flow motion" style="animation-delay:0.0s"/>
+<path d="M494 123 L502 128 L494 133" stroke="var(--claude)" stroke-width="2" fill="none"/>
+<rect x="510" y="212" width="340" height="136" rx="10" fill="var(--tint_codex)" stroke="var(--codex)" stroke-width="1.5" />
+<text x="528" y="238" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="15" font-weight="700" fill="var(--codex)" text-anchor="start">Codex</text>
+<text x="528" y="262" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">AGENTS.md</text>
+<text x="700" y="262" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">read directly</text>
+<text x="528" y="284" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">.agents/skills/</text>
+<text x="700" y="284" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">read directly</text>
+<text x="528" y="306" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">.codex/agents/*.toml</text>
+<text x="700" y="306" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">generated</text>
+<text x="528" y="328" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">hooks.json</text>
+<text x="700" y="328" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">→ adapter → hooks</text>
+<path d="M330 280 H500" stroke="var(--line)" stroke-width="2" fill="none"/>
+<path d="M330 280 H500" stroke="var(--codex)" stroke-width="2.5" fill="none" stroke-dasharray="10 160" class="flow motion" style="animation-delay:0.6s"/>
+<path d="M494 275 L502 280 L494 285" stroke="var(--codex)" stroke-width="2" fill="none"/>
+<text x="415" y="270" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" font-weight="400" fill="var(--muted)" text-anchor="middle">gen-codex-agents.py</text>
+<rect x="30" y="372" width="820" height="58" rx="10" fill="var(--tint_green)" stroke="var(--green)" stroke-width="1.5" />
+<text x="48" y="397" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="700" fill="var(--green)" text-anchor="start">.claude/githooks/</text>
+<text x="48" y="417" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--text)" text-anchor="start">pre-commit · pre-push — the same gate whether you commit/push from Claude, Codex, or a terminal</text>
+<path d="M600 340 V366" stroke="var(--claude)" stroke-width="2" fill="none" stroke-dasharray="4 4"/>
+<path d="M760 340 V366" stroke="var(--codex)" stroke-width="2" fill="none" stroke-dasharray="4 4"/>
+</svg>

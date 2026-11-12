@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" width="880" height="250" role="img" aria-label="push 게이트: 빌드 → 테스트 → 커버리지">
+<title>push 게이트: 빌드 → 테스트 → 커버리지</title>
+<style>
+svg{--bg:#ffffff;--card:#f6f8fa;--line:#d0d7de;--text:#1f2328;--muted:#59636e;--claude:#c15f3c;--codex:#6e56cf;--green:#1a7f37;--red:#cf222e;--blue:#0969da;--tint_claude:#fbeee8;--tint_codex:#f0edfc;--tint_green:#e6f4ea;--tint_blue:#e7f0fb}
+@keyframes c1{0%{opacity:0} 22.00%{opacity:0} 24.00%{opacity:1} 88%{opacity:1} 92%{opacity:0} 100%{opacity:0}}
+@keyframes c2{0%{opacity:0} 44.00%{opacity:0} 46.00%{opacity:1} 88%{opacity:1} 92%{opacity:0} 100%{opacity:0}}
+@keyframes c3{0%{opacity:0} 66.00%{opacity:0} 68.00%{opacity:1} 88%{opacity:1} 92%{opacity:0} 100%{opacity:0}}
+@keyframes okp{0%{opacity:0} 70%{opacity:0} 73%{opacity:1} 88%{opacity:1} 92%{opacity:0} 100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important} .motion{display:none} }
+</style>
+<rect width="880" height="250" rx="14" fill="var(--bg)" stroke="var(--line)"/>
+<text x="30" y="38" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="17" font-weight="650" fill="var(--text)" text-anchor="start">push 게이트</text>
+<text x="30" y="60" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">하나라도 실패하면 push 를 막습니다 (exit 2). CI 는 같은 스크립트로 다시 판정합니다.</text>
+<rect x="30" y="82" width="150" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<text x="105.0" y="125" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14" font-weight="700" fill="var(--text)" text-anchor="middle">git push</text>
+<path d="M182 120 H194" stroke="var(--muted)" stroke-width="2"/>
+<rect x="197" y="82" width="150" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<text x="272.0" y="114" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="var(--blue)" text-anchor="middle">빌드</text>
+<text x="272.0" y="136" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" font-weight="400" fill="var(--muted)" text-anchor="middle">build-gate.sh</text>
+<g class="motion" style="opacity:0;animation:c1 7s infinite"><circle cx="333" cy="96" r="9" fill="var(--green)"/><path d="M329 96 l3 3 l6 -6" stroke="var(--bg)" stroke-width="2" fill="none"/></g>
+<path d="M349 120 H361" stroke="var(--muted)" stroke-width="2"/>
+<path d="M272.0 158 V186" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3 3"/>
+<rect x="364" y="82" width="150" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<text x="439.0" y="114" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="var(--blue)" text-anchor="middle">변경 범위 테스트</text>
+<text x="439.0" y="136" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" font-weight="400" fill="var(--muted)" text-anchor="middle">build-gate.sh</text>
+<g class="motion" style="opacity:0;animation:c2 7s infinite"><circle cx="500" cy="96" r="9" fill="var(--green)"/><path d="M496 96 l3 3 l6 -6" stroke="var(--bg)" stroke-width="2" fill="none"/></g>
+<path d="M516 120 H528" stroke="var(--muted)" stroke-width="2"/>
+<path d="M439.0 158 V186" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3 3"/>
+<rect x="531" y="82" width="150" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<text x="606.0" y="114" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="var(--blue)" text-anchor="middle">커버리지 ≥ 90%</text>
+<text x="606.0" y="136" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" font-weight="400" fill="var(--muted)" text-anchor="middle">coverage-gate.py</text>
+<g class="motion" style="opacity:0;animation:c3 7s infinite"><circle cx="667" cy="96" r="9" fill="var(--green)"/><path d="M663 96 l3 3 l6 -6" stroke="var(--bg)" stroke-width="2" fill="none"/></g>
+<path d="M683 120 H695" stroke="var(--muted)" stroke-width="2"/>
+<path d="M606.0 158 V186" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3 3"/>
+<rect x="698" y="82" width="150" height="76" rx="10" fill="var(--tint_green)" stroke="var(--green)" stroke-width="1.5" />
+<text x="773.0" y="125" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="var(--green)" text-anchor="middle">push 통과</text>
+<rect x="197" y="186" width="484" height="34" rx="8" fill="var(--bg)" stroke="var(--red)" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="211" y="208" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="600" fill="var(--red)" text-anchor="start">✕ 실패 → push 차단, 원인 출력 (tail)</text>
+<rect x="698" y="82" width="150" height="76" rx="10" fill="none" stroke="var(--green)" stroke-width="3" class="motion" style="opacity:0;animation:okp 7s infinite"/>
+</svg>

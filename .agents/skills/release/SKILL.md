@@ -127,7 +127,7 @@ fi
 
 1. **`--message` 인자 주어짐** → 그대로 사용 (사용자가 의도 명시)
 2. **VERSION/CHANGELOG/README 외에도 staged 변경 있음** (= 기능/수정 동반 릴리스) → 사용자에게 묻거나 staged 파일에서 type 추론:
-   - `.claude/agents/`, `.claude/commands/`, `.agents/skills/` 신규 → `feat`
+   - `.claude/agents/`, `.agents/skills/` 신규 → `feat`
    - `.claude/hooks/`, 기존 파일 수정 위주 → `fix` 또는 `feat` (사용자 확인)
    - 추론 결과를 사용자에게 1회 확인 권장 (기본 yes)
 3. **VERSION/CHANGELOG/README 만 staged** (= 순수 release commit) → `chore(release): v$NEW`
@@ -139,7 +139,7 @@ EXTRA=$(git diff --cached --name-only | grep -vE '^(VERSION|CHANGELOG\.md|README
 if [ -n "$EXTRA" ]; then
   # 첫 staged 카테고리로 type 추론
   case "$(echo "$EXTRA" | head -1)" in
-    .claude/agents/*|.claude/commands/*|.agents/skills/*|.claude/templates/*) TYPE=feat ;;
+    .claude/agents/*|.agents/skills/*|.claude/templates/*) TYPE=feat ;;
     .claude/hooks/*|.github/workflows/*) TYPE=fix ;;
     *) TYPE=feat ;;
   esac

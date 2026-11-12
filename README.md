@@ -10,7 +10,7 @@
 
 [![Claude](https://img.shields.io/badge/Claude-Code-FF6B35?logo=anthropic&logoColor=white)](https://claude.ai/code)
 [![Codex](https://img.shields.io/badge/OpenAI-Codex-412991?logo=openai&logoColor=white)](https://developers.openai.com/codex)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.1-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 <br/>
@@ -29,14 +29,15 @@
 
 코딩 에이전트(Claude Code · Codex)를 프로젝트에서 바로 활용할 수 있도록 **skill, 에이전트, 훅, 템플릿**을 미리 세팅한 스타터입니다. (구 `claude-code-starter`)
 
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-ko-dark.svg"><img src="docs/assets/architecture-ko-light.svg" alt="규칙 한 벌을 Claude Code 와 Codex 가 함께 읽는 구조" width="880"></picture></p>
+
 - **Claude Code · Codex 공용** — 지침 `AGENTS.md` 하나, skill `.agents/skills/` 한 벌, 훅 `.claude/hooks/` 한 벌을 두 에이전트가 같이 쓴다. `--platform claude|codex|both` 로 설치
 - **에이전트 무관 게이트** — git 훅(`.claude/githooks`)이 빌드 → 테스트 → 커버리지 push 게이트 · gitleaks 시크릿 스캔 · 허브 소스 커밋 차단을 Claude·Codex·터미널 어디서든 강제. CI 가 같은 판정 스크립트로 재검증
 - **worktree 강제 · 안전 가드** — 메인 체크아웃은 허브 전용(소스 편집 차단), dev/main 삭제·force push 차단, 끝난 작업 브랜치 삭제는 무확인
 - **교차 리뷰** — `/pr` 이 반대 플랫폼 모델(Claude 작업은 Codex, Codex 작업은 Claude)로 리뷰. `/handoff` 로 에이전트 간 작업 인계
-
 - `/init` 한 번으로 스택에 맞는 하네스 구성 (스택 자동 감지)
 - 스택별 전문 subagent로 생성·수정·테스트 역할 분리
-- **디스패처 커맨드** — `/new`, `/plan`, `/review` 세 개로 모든 생성·계획·리뷰 작업 통합
+- **디스패처 skill** — `/new`, `/plan`, `/review` 세 개로 모든 생성·계획·리뷰 작업 통합 (Codex 는 `$new` 처럼 호출)
 - AI가 실수할 때마다 `/rule` 로 규칙을 누적해 점점 정교해지는 피드백 루프
 - `memory/MEMORY.md` 세션 시작 시 자동 로드 — 과거 결정·교훈이 항상 컨텍스트에 포함
 - **Git Worktree 기반 병렬 작업** — `/new worktree` 로 여러 기능 동시 개발
@@ -48,9 +49,10 @@
 - **기획자 에이전트** — `/plan` (또는 `/start`) 가 요청 → PRD + 역할별 구현 프롬프트 자동 생성. Agent Teams 로 병렬 구현도 옵션
 - **`/commit` → `/pr` → `/merge` 자동 체인** — 각 단계에서 다음 단계를 제안(수락 시 연결 실행). 완전 자동이 아닌 "연속 확인" 체인
 
-**지원 스택:** Kotlin Spring Boot · Next.js · Flutter · Go Gin · Python FastAPI
+**지원 스택:** Kotlin Spring Boot · Next.js · Flutter · Go Gin · Python FastAPI (+ AI/ML) · Infra (Terraform·Kubernetes·Helm)
+**코드 없는 모드:** Marketing · Sales · Product
 
-> **v1.6.0 Breaking Change** — 커맨드 16개 → 11개로 재편. [마이그레이션 가이드](#v160-마이그레이션) 참고.
+> **v2.0.0 Breaking Change** — `CLAUDE.md` → `AGENTS.md`, 커맨드 → `.agents/skills/`. [v2 마이그레이션 가이드](#v2-마이그레이션-v1x--v200) 참고.
 
 ---
 
@@ -84,7 +86,7 @@ curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve         # 사용자 자산
 **보존 규약** — update 시 자동 보존:
 ```
 .agents/skills/<내 skill>/        # 스타터가 배포하지 않는 이름
-.claude/{agents,commands,hooks}/custom/
+.claude/{agents,hooks}/custom/   .claude/commands/custom/ (v1 레거시)
 .claude/settings.local.json       .codex/config.toml      .codex/rules/<내 규칙>
 memory/  AGENTS.md                # 절대 건드리지 않음
 ```
@@ -141,11 +143,14 @@ memory/  AGENTS.md                # 절대 건드리지 않음
 <summary><code>/init</code>이 하는 일</summary>
 
 1. 스택 자동 감지 (인수 생략 시)
-2. 선택 스택과 무관한 agent/template/skill 제거 (커맨드는 전부 유지 — 디스패처가 분기)
-3. `AGENTS.md` 설치 — 아키텍처 규칙, 컨벤션
-4. `.claude/settings.json` 설치 — 스택별 허용 명령어 + 자동 lint/test 훅
-5. `memory/MEMORY.md` 초기화 — 프로젝트 정보 인터뷰 후 기록
-6. `dev` 브랜치 생성 + `.worktrees/` gitignore 등록
+2. 선택 스택과 무관한 agent·template·패턴 skill 제거 (워크플로 skill 은 전부 유지 — 디스패처가 분기)
+3. `CLAUDE.md` 가 있으면 `AGENTS.md` 로 이전 제안 (남아 있으면 Claude Code 가 AGENTS.md 를 무시)
+4. `AGENTS.md` 설치 — 아키텍처 규칙, 컨벤션 (Claude·Codex 공통)
+5. `.claude/settings.json` 설치 (플랫폼 `claude`·`both`) — 스택별 허용 명령어 + 훅. Codex 는 `.codex/` 가 같은 훅·규칙을 사용
+6. `.claude/stacks.json` 생성 (모든 모드) — 훅의 기준 파일 + `harness` 옵션
+7. git 훅 설정 (코드 모드, 사용자 확인 후) — `core.hooksPath=.claude/githooks`
+8. `memory/MEMORY.md` 초기화 — 프로젝트 정보 인터뷰 후 기록
+9. `dev` 브랜치 생성 + `.worktrees/` gitignore 등록
 
 </details>
 
@@ -169,6 +174,8 @@ memory/  AGENTS.md                # 절대 건드리지 않음
 ---
 
 ## 워크플로
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/workflow-ko-dark.svg"><img src="docs/assets/workflow-ko-light.svg" alt="기능 하나의 흐름: /start → /commit → /pr → CI → /merge → 정리" width="880"></picture></p>
 
 ```
 /start <기능 설명>             # 1. 신규 기능 한 번에: worktree + PRD + 자동 구현
@@ -204,19 +211,20 @@ main  ←──── dev  ←──── feature/{name}
 
 각 브랜치는 `.worktrees/{type}-{name}/` 에 격리된 작업공간으로 생성됩니다.
 타입: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `test` · `perf`
-여러 터미널 / Claude Code 인스턴스에서 **병렬 작업** 가능.
+여러 터미널 / Claude Code·Codex 세션에서 **병렬 작업** 가능.
 
 > ⚠️ **Git 브랜치 네이밍 제약**: `dev`와 `dev/feature-*` 는 refs 구조상 공존 불가. 피처 브랜치는 `dev/` 대신 `feature/`, `fix/` 등 독립 prefix를 사용합니다.
 
 ---
 
-## Skill (워크플로 17개 + 패턴)
+## Skill (워크플로 17개 + 패턴 20개)
 
 > v2.0.0 — 구 커맨드(`.claude/commands/*.md`)가 `.agents/skills/<name>/SKILL.md` 로 이전됐습니다. Claude 는 `/name`, Codex 는 `$name` 으로 부릅니다.
+> 부작용이 큰 skill(`init`·`rule`·`release`·`upgrade`·`starter`·`merge`·`handoff`)은 명시적으로 불렀을 때만 실행됩니다.
 
 ### 디스패처 (서브명령)
 
-| 커맨드 | 인자 | 설명 |
+| skill | 인자 | 설명 |
 |--------|------|------|
 | `/new` | `<Name>` | **자동 감지** — 스택(go/kotlin→api, nextjs→component, flutter→screen) 또는 이름 패턴(`feature-*`→worktree, `ci\|release\|publish`→workflow)으로 분기 |
 | | `<sub> <Name>` (override) | `api` / `component` / `screen` / `module` / `workflow` / `worktree` 명시 지정 |
@@ -247,10 +255,19 @@ main  ←──── dev  ←──── feature/{name}
 | `/rule <설명>` | AI 실수를 AGENTS.md 규칙으로 등록 |
 | `/memory [add\|search]` | Second Brain 기억 추가·검색 (전체 조회는 자동 로드) |
 | `/marketing [category task\|자연어]` | 마케팅 작업 라우터 — 35개 `marketing-skills:*` 스킬을 6개 카테고리로 분기 |
-| `/starter [check\|update]` | 스타터 버전 확인 / 재설치 |
+| `/starter [check\|update\|rollback]` | 스타터 버전 확인 / 전체 갱신 / 롤백 (`--platform` 으로 플랫폼 전환) |
+| `/upgrade [diff\|apply <카테고리>\|optional <name>]` | 최신 스타터와 카테고리별 비교·선택 갱신, 선택 skill 설치 |
 | `/harness [check\|doctor\|dry-run\|size\|lint-settings]` | 하네스(settings·.codex·hooks·agents·skills) 검증·dry-run·자동 수정 제안 |
 | `/handoff [clear]` | 다른 에이전트(Claude↔Codex)·새 세션에 넘길 인계 메모 — 다음 세션 시작 시 자동 표시 |
 | `/release [patch\|minor\|major]` | VERSION + CHANGELOG bump + commit (+ /pr) |
+
+### 패턴 skill (on-demand 참고서)
+
+에이전트가 해당 작업을 할 때 스스로 읽습니다. `/init` 이 스택에 맞는 것만 남깁니다.
+
+- **스택**: `kotlin-patterns` · `go-patterns` · `python-patterns` · `nextjs-patterns` · `flutter-patterns` · `ai-patterns` · `ai-eval-patterns`
+- **설계·인프라**: `api-design-patterns` · `db-patterns` · `cache-patterns` · `docker-patterns` · `github-actions-patterns` · `terraform-patterns` · `kubernetes-patterns` · `helm-patterns`
+- **횡단**: `security-patterns` · `observability-patterns` · `ui-design-impl` · `motion-patterns` · `mcp-presets`
 
 ---
 
@@ -266,6 +283,8 @@ main  ←──── dev  ←──── feature/{name}
 | `flutter-{generator\|modifier\|tester}` | Flutter 코드 생성·수정·테스트 |
 | `go-{generator\|modifier\|tester}` | Go Gin 코드 생성·수정·테스트 |
 | `python-{generator\|modifier\|tester}` | Python FastAPI 코드 생성·수정·테스트 |
+| `ai-{researcher\|generator\|modifier\|tester}` | AI/ML — 리서치 · 코드 생성 · 튜닝 · 테스트 (Python 전용) |
+| `infra-generator` | Terraform / Kubernetes / Helm 생성 (단일 agent — modifier/tester 분리 없음) |
 | `api-designer` | REST API 설계 전문 (OpenAPI 3.0 YAML) — Kotlin · Go · Python 전용 |
 | `planner` | 기획자 — 요청 → PRD + 역할별 구현 프롬프트 작성 (코드는 작성하지 않음). `/start` 또는 `/plan` 이 호출 |
 | `gtm-planner` | Go-To-Market 전담 — PRD 기반으로 `marketing.md` + `sales.md` 초안, `docs/gtm/` 스냅샷 · 히스토리 적립. `/start` 또는 `/plan --marketing\|--sales\|--gtm` 플래그가 호출 |
@@ -289,30 +308,36 @@ main  ←──── dev  ←──── feature/{name}
 
 ## 플러그인 (스택별 자동 설치)
 
-### 공통 (전 스택)
+`/init` 이 `.claude/settings.json` 의 `enabledPlugins` 로 켭니다 (Claude 전용). 스택별 최소 필수만 넣습니다.
 
-| 플러그인 | 설명 |
-|---------|------|
-| `github` | GitHub 레포 · PR · 이슈 관리 |
-| `context7` | 최신 공식 문서 컨텍스트 자동 주입 |
-| `feature-dev` | 탐색→설계→구현→리뷰 7단계 체계적 개발 |
-| `code-review` | 병렬 4-agent PR 자동 리뷰 |
-| `security-guidance` | 위험 명령어 실행 전 보안 경고 |
-| `hookify` | 반복 실수를 자동 방지 훅으로 등록 |
-| `commit-commands` | 커밋·푸시·PR 생성 원스텝 |
+### 공통
 
-### 스택별 추가
+| 플러그인 | 대상 | 설명 |
+|---------|------|------|
+| `github` | 전 모드 | GitHub 레포 · PR · 이슈 관리 |
+| `commit-commands` | 전 모드 | 커밋·푸시·PR 생성 원스텝 |
+| `hookify` | 전 모드 | 반복 실수를 자동 방지 훅으로 등록 |
+| `feature-dev` | 코드 스택 · infra | 탐색→설계→구현→리뷰 단계별 개발 |
 
-| 플러그인 | 스택 | 설명 |
+### 스택·모드별 추가
+
+| 플러그인 | 스택·모드 | 설명 |
 |---------|------|------|
 | `kotlin-lsp` | Kotlin | 타입 오류 · 심볼 참조 실시간 지원 |
 | `typescript-lsp` | Next.js | TypeScript 코드 인텔리전스 |
 | `frontend-design` | Next.js | UI 패턴 · 접근성 가이드 |
 | `playwright` | Next.js | E2E 브라우저 테스트 자동화 |
+| `marketing-skills` | Marketing · Sales · Product | 카피·SEO·CRO·광고·세일즈 skill 모음 |
+| `pm-*` (8개) | Product | Discovery · Strategy · Execution · GTM · Analytics 등 PM skill |
+
+> 모노레포는 역할에 해당하는 스택 플러그인을 합칩니다. `CLAUDE.md` 를 만드는 `claude-md-management` 플러그인은 쓰지 않습니다 (CI 로 차단).
 
 ---
 
 ## 자동 훅
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/hooks-ko-dark.svg"><img src="docs/assets/hooks-ko-light.svg" alt="한 턴 동안 훅이 도는 시점" width="880"></picture></p>
+
 
 훅 스크립트는 `.claude/hooks/` 한 벌 — Claude 는 `settings.json`, Codex 는 `.codex/hooks.json` 이 부릅니다. 모든 훅은 `.claude/stacks.json` 이 없으면 조용히 끝나고, 옵션은 `stacks.json` 의 `harness` 블록으로 켜고 끕니다.
 
@@ -326,9 +351,13 @@ main  ←──── dev  ←──── feature/{name}
 | `pre-push.sh` + `build-gate.sh` | git push | 빌드 → 변경 범위 테스트 → 커버리지 (`coverage-gate.py`, CI 와 같은 판정) | `buildGate` (true) · `coverage` (90) |
 | `memory-sync.sh` | 세션 시작·종료 | 저장소 `memory/` 를 원본으로 링크·커밋 (여러 PC·worktree·에이전트 공유) | `memorySync` (off) |
 | `model-router.sh` | subagent 호출 | 작업 난이도로 모델 티어 선택 (TypeSafe 키 필요) | `modelRouter` (off) |
+| `usage-counter.sh` | 도구 사용 후 (Claude) | 도구 이름별 사용 횟수를 로컬 `.claude/.usage.json` 에만 집계 (외부 전송 없음) | `telemetry` (off) |
 | `codex-adapter.sh` | Codex 전용 | `apply_patch` 를 파일별 Claude 형식 입력으로 바꿔 위 훅에 전달 | — |
 
 **git 훅** (`bash .claude/scripts/setup-git-hooks.sh` → `core.hooksPath=.claude/githooks`): `pre-commit` = Codex agent 동기화 검사 · gitleaks · 허브 소스 커밋 차단, `pre-push` = 위 push 게이트. 에이전트 밖 터미널에서도 동작합니다.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/push-gate-ko-dark.svg"><img src="docs/assets/push-gate-ko-light.svg" alt="push 게이트: 빌드 → 테스트 → 커버리지" width="880"></picture></p>
+
 
 **수동 도구**: `dev-smoke.sh smoke|up|down` (변경 스택 실제 기동·헬스체크) · `timing.sh` (단계별 소요 시간 기록) · `cross-review.sh` (교차 리뷰).
 
@@ -384,6 +413,7 @@ coding-agent-starter/
 ├── memory/
 │   └── MEMORY.md             # 이 레포의 Second Brain
 ├── docs/                     # 기능 스펙 + GTM (필요 시 자동 생성)
+│   ├── assets/                       # (스타터 저장소 전용) README 애니메이션 SVG — gen-diagrams.py 생성물, 배포 안 됨
 │   ├── specs/
 │   │   ├── {feature}.md               # PRD
 │   │   └── {feature}/

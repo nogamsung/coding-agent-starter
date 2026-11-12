@@ -12,6 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-11-12
+
+### Docs — README 최신화 + 애니메이션 다이어그램
+
+- README(한·영)를 v2 실제 구성과 맞춤
+  - 남아 있던 v1.6.0 공지와 깨진 링크를 v2.0.0 공지로 교체
+  - Agents 표에 `ai-*` 4개 · `infra-generator` 추가 (한국어판 누락분)
+  - 플러그인 표를 실제 템플릿 기준으로 정정 — 공통은 `github` · `commit-commands` · `hookify`, `feature-dev` 는 코드 스택·infra. 템플릿에 없는 `context7` · `code-review` · `security-guidance` 삭제, marketing·sales·product 플러그인 추가
+  - Skill 표에 `/upgrade` · `/handoff`(영문) 추가, 패턴 skill 20개 목록 추가, 지원 스택에 AI/ML · Infra · 코드 없는 모드 표기
+  - `/init` 단계에 stacks.json 생성 · CLAUDE.md 이전 · git 훅 설정 반영
+  - 자동 훅 표에 `usage-counter.sh` 추가, 영문판에 git 훅·수동 도구·스택별 표 보강
+  - `/upgrade` 카테고리를 실제 9개로 정정 (영문판)
+- 애니메이션 SVG 다이어그램 4종 (`docs/assets/`, 한·영 × 라이트·다크) — 구조 · 기능 흐름 · 훅 시점 · push 게이트. `python3 docs/assets/gen-diagrams.py` 로 생성, `prefers-reduced-motion` 존중. `docs/` 는 bootstrap 이 복사하지 않아 사용자 프로젝트에 배포되지 않음
+
+### Fixed
+
+- `/commit` skill 의 README 동기화 표가 v1 경로(`.claude/commands/`)를 보고 있어 새 skill 추가 시 README 갱신 제안이 나오지 않던 문제 — `.agents/skills/` 기준으로 변경, 훅 추가 행 신설
+- `/release` skill 의 커밋 타입 추론에서 v1 경로 `.claude/commands/` 제거
+
 ## [2.0.0] - 2026-11-12
 
 ### ⚠️ BREAKING — `claude-code-starter` → `coding-agent-starter`, Claude Code · Codex 공용

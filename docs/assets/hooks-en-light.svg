@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 330" width="880" height="330" role="img" aria-label="When hooks run during a turn">
+<title>When hooks run during a turn</title>
+<style>
+svg{--bg:#ffffff;--card:#f6f8fa;--line:#d0d7de;--text:#1f2328;--muted:#59636e;--claude:#c15f3c;--codex:#6e56cf;--green:#1a7f37;--red:#cf222e;--blue:#0969da;--tint_claude:#fbeee8;--tint_codex:#f0edfc;--tint_green:#e6f4ea;--tint_blue:#e7f0fb}
+@keyframes h0{0.00%{opacity:0} 2.00%{opacity:1} 21.25%{opacity:1} 24.25%{opacity:0} 100.00%{opacity:0}}
+@keyframes h1{0.00%{opacity:0} 24.99%{opacity:0} 27.00%{opacity:1} 46.25%{opacity:1} 49.25%{opacity:0} 100.00%{opacity:0}}
+@keyframes h2{0.00%{opacity:0} 49.99%{opacity:0} 52.00%{opacity:1} 71.25%{opacity:1} 74.25%{opacity:0} 100.00%{opacity:0}}
+@keyframes h3{0.00%{opacity:0} 74.99%{opacity:0} 77.00%{opacity:1} 96.25%{opacity:1} 99.25%{opacity:0} 100.00%{opacity:0}}
+@keyframes ph{1.00%{transform:translateX(0px)} 21.25%{transform:translateX(0px)} 26.00%{transform:translateX(208px)} 46.25%{transform:translateX(208px)} 51.00%{transform:translateX(416px)} 71.25%{transform:translateX(416px)} 76.00%{transform:translateX(624px)} 96.25%{transform:translateX(624px)}}
+.ph{animation:ph 8s infinite ease-in-out}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important} .motion{display:none} }
+</style>
+<rect width="880" height="330" rx="14" fill="var(--bg)" stroke="var(--line)"/>
+<text x="30" y="38" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="17" font-weight="650" fill="var(--text)" text-anchor="start">When hooks run during a turn</text>
+<text x="30" y="60" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">red = blocks when risky · green = reports only · * = off by default (enable in stacks.json harness)</text>
+<path d="M30 112 H850" stroke="var(--line)" stroke-width="2"/>
+<circle cx="42" cy="112" r="6" fill="var(--bg)" stroke="var(--muted)" stroke-width="2"/>
+<text x="32" y="98" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="13" font-weight="650" fill="var(--text)" text-anchor="start">Session start</text>
+<rect x="30" y="140" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="30" y="140" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--blue)" stroke-width="2" class="motion" style="opacity:0;animation:h0 8s infinite"/>
+<text x="44" y="162" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--blue)" text-anchor="start">session-start.sh</text>
+<rect x="30" y="184" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="30" y="184" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--muted)" stroke-width="2" class="motion" style="opacity:0;animation:h0 8s infinite"/>
+<text x="44" y="206" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="start">memory-sync.sh *</text>
+<circle cx="250" cy="112" r="6" fill="var(--bg)" stroke="var(--muted)" stroke-width="2"/>
+<text x="240" y="98" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="13" font-weight="650" fill="var(--text)" text-anchor="start">Before a tool</text>
+<rect x="238" y="140" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="238" y="140" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--red)" stroke-width="2" class="motion" style="opacity:0;animation:h1 8s infinite"/>
+<text x="252" y="162" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--red)" text-anchor="start">safety-guard.sh</text>
+<rect x="238" y="184" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="238" y="184" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--red)" stroke-width="2" class="motion" style="opacity:0;animation:h1 8s infinite"/>
+<text x="252" y="206" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--red)" text-anchor="start">worktree-guard.sh</text>
+<rect x="238" y="228" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="238" y="228" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--red)" stroke-width="2" class="motion" style="opacity:0;animation:h1 8s infinite"/>
+<text x="252" y="250" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--red)" text-anchor="start">pre-push.sh</text>
+<circle cx="458" cy="112" r="6" fill="var(--bg)" stroke="var(--muted)" stroke-width="2"/>
+<text x="448" y="98" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="13" font-weight="650" fill="var(--text)" text-anchor="start">After a tool</text>
+<rect x="446" y="140" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="446" y="140" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--blue)" stroke-width="2" class="motion" style="opacity:0;animation:h2 8s infinite"/>
+<text x="460" y="162" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--blue)" text-anchor="start">post-edit-lint.sh</text>
+<rect x="446" y="184" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="446" y="184" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--muted)" stroke-width="2" class="motion" style="opacity:0;animation:h2 8s infinite"/>
+<text x="460" y="206" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="start">usage-counter.sh *</text>
+<circle cx="666" cy="112" r="6" fill="var(--bg)" stroke="var(--muted)" stroke-width="2"/>
+<text x="656" y="98" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="13" font-weight="650" fill="var(--text)" text-anchor="start">Turn end</text>
+<rect x="654" y="140" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="654" y="140" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--green)" stroke-width="2" class="motion" style="opacity:0;animation:h3 8s infinite"/>
+<text x="668" y="162" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--green)" text-anchor="start">stop-tests.sh</text>
+<rect x="654" y="184" width="194" height="34" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="654" y="184" width="194" height="34" rx="8" fill="var(--bg)" stroke="var(--muted)" stroke-width="2" class="motion" style="opacity:0;animation:h3 8s infinite"/>
+<text x="668" y="206" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="start">memory-sync.sh *</text>
+<g class="ph motion"><circle cx="42" cy="112" r="6" fill="var(--blue)"/></g>
+<text x="30" y="300" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">Codex has no turn-end event, so stop-tests runs in Claude only. The push gate is a git hook, so it applies to both.</text>
+</svg>

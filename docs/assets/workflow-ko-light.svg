@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 270" width="880" height="270" role="img" aria-label="기능 하나의 흐름: /start → /commit → /pr → CI → /merge → 정리">
+<title>기능 하나의 흐름: /start → /commit → /pr → CI → /merge → 정리</title>
+<style>
+svg{--bg:#ffffff;--card:#f6f8fa;--line:#d0d7de;--text:#1f2328;--muted:#59636e;--claude:#c15f3c;--codex:#6e56cf;--green:#1a7f37;--red:#cf222e;--blue:#0969da;--tint_claude:#fbeee8;--tint_codex:#f0edfc;--tint_green:#e6f4ea;--tint_blue:#e7f0fb}
+.lit{opacity:0}
+@keyframes s0{0.00%{opacity:0} 2.00%{opacity:1} 13.33%{opacity:1} 16.33%{opacity:0} 100.00%{opacity:0}}
+@keyframes s1{0.00%{opacity:0} 16.66%{opacity:0} 18.67%{opacity:1} 30.00%{opacity:1} 33.00%{opacity:0} 100.00%{opacity:0}}
+@keyframes s2{0.00%{opacity:0} 33.32%{opacity:0} 35.33%{opacity:1} 46.67%{opacity:1} 49.67%{opacity:0} 100.00%{opacity:0}}
+@keyframes s3{0.00%{opacity:0} 49.99%{opacity:0} 52.00%{opacity:1} 63.33%{opacity:1} 66.33%{opacity:0} 100.00%{opacity:0}}
+@keyframes s4{0.00%{opacity:0} 66.66%{opacity:0} 68.67%{opacity:1} 80.00%{opacity:1} 83.00%{opacity:0} 100.00%{opacity:0}}
+@keyframes s5{0.00%{opacity:0} 83.32%{opacity:0} 85.33%{opacity:1} 96.67%{opacity:1} 99.67%{opacity:0} 100.00%{opacity:0}}
+@keyframes dot{1.00%{transform:translateX(0.0px)} 13.33%{transform:translateX(0.0px)} 17.67%{transform:translateX(140.0px)} 30.00%{transform:translateX(140.0px)} 34.33%{transform:translateX(280.0px)} 46.67%{transform:translateX(280.0px)} 51.00%{transform:translateX(420.0px)} 63.33%{transform:translateX(420.0px)} 67.67%{transform:translateX(560.0px)} 80.00%{transform:translateX(560.0px)} 84.33%{transform:translateX(700.0px)} 96.67%{transform:translateX(700.0px)}}
+.dot{animation:dot 9s infinite ease-in-out}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important} .motion{display:none} }
+</style>
+<rect width="880" height="270" rx="14" fill="var(--bg)" stroke="var(--line)"/>
+<text x="30" y="38" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="17" font-weight="650" fill="var(--text)" text-anchor="start">기능 하나의 흐름</text>
+<text x="30" y="60" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">각 단계가 다음 단계를 제안 — 수락하면 이어서 실행</text>
+<path d="M92.0 142 H792.0" stroke="var(--line)" stroke-width="2"/>
+<rect x="30" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="30" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--blue)" stroke-width="2.5" class="lit motion" style="animation:s0 9s infinite"/>
+<text x="92.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--blue)" text-anchor="middle">/start</text>
+<text x="92.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">worktree + PRD</text>
+<text x="92.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">+ 자동 구현</text>
+<rect x="170" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="170" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--blue)" stroke-width="2.5" class="lit motion" style="animation:s1 9s infinite"/>
+<text x="232.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--blue)" text-anchor="middle">/commit</text>
+<text x="232.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">Conventional</text>
+<text x="232.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">Commits</text>
+<rect x="310" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="310" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--codex)" stroke-width="2.5" class="lit motion" style="animation:s2 9s infinite"/>
+<text x="372.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--codex)" text-anchor="middle">/pr</text>
+<text x="372.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">보안 리뷰</text>
+<text x="372.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">+ 교차 리뷰</text>
+<rect x="450" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="450" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--green)" stroke-width="2.5" class="lit motion" style="animation:s3 9s infinite"/>
+<text x="512.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--green)" text-anchor="middle">CI</text>
+<text x="512.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">같은 판정으로</text>
+<text x="512.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">재검증</text>
+<rect x="590" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="590" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--claude)" stroke-width="2.5" class="lit motion" style="animation:s4 9s infinite"/>
+<text x="652.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--claude)" text-anchor="middle">/merge</text>
+<text x="652.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">squash 머지</text>
+<text x="652.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">+ 버전 태그</text>
+<rect x="730" y="92" width="124" height="100" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1" />
+<rect x="730" y="92" width="124" height="100" rx="10" fill="var(--bg)" stroke="var(--green)" stroke-width="2.5" class="lit motion" style="animation:s5 9s infinite"/>
+<text x="792.0" y="122" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="15" font-weight="700" fill="var(--green)" text-anchor="middle">정리</text>
+<text x="792.0" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">worktree 정리</text>
+<text x="792.0" y="166" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="middle">브랜치 삭제</text>
+<g class="dot motion"><circle cx="92.0" cy="204" r="5" fill="var(--blue)"/></g>
+<text x="30" y="248" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif" font-size="12" font-weight="400" fill="var(--muted)" text-anchor="start">PR 머지가 끝나면 원격·로컬 작업 브랜치와 worktree 까지 정리됩니다.</text>
+</svg>
