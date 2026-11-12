@@ -1,0 +1,65 @@
+name: Harness CI
+
+# 하네스(.claude/·.agents/·.codex/) 가 바뀐 PR 만 — 훅·스크립트 단위 테스트, 문법, Codex 에이전트 동기화.
+# 로컬 git 훅(.claude/githooks)과 같은 판정을 CI 가 다시 강제한다 (--no-verify 로 넘겨도 여기서 막힌다).
+on:
+  pull_request:
+    paths:
+      - '.claude/**'
+      - '.agents/**'
+      - '.codex/**'
+      - 'AGENTS.md'
+      - '.github/workflows/harness-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Shell syntax (hooks · githooks · scripts)
+        run: |
+          set -euo pipefail
+          for f in .claude/hooks/*.sh .claude/githooks/* .claude/scripts/*.sh; do
+            [ -f "$f" ] || continue
+            bash -n "$f" || { echo "❌ $f"; exit 1; }
+          done
+      - name: Hook/script unit tests
+        run: |
+          if [ -d .claude/scripts/tests ]; then
+            python3 -m unittest discover -s .claude/scripts/tests -p 'test_*.py' -v
+          else
+            echo "테스트 없음 — 건너뜀"
+          fi
+      - name: Codex agents in sync with .claude/agents
+        run: |
+          if [ -d .codex ] && [ -f .claude/scripts/gen-codex-agents.py ]; then
+            python3 .claude/scripts/gen-codex-agents.py --check
+          else
+            echo "Codex 미설치 — 건너뜀"
+          fi
+      - name: Skill frontmatter (name == dir, description)
+        run: |
+          pip install --quiet pyyaml
+          python3 - <<'PY'
+          import pathlib, sys, yaml
+          bad = 0
+          for f in sorted(pathlib.Path('.agents/skills').glob('*/SKILL.md')):
+              t = f.read_text()
+              try:
+                  fm = yaml.safe_load(t.split('\n---\n', 1)[0].removeprefix('---\n'))
+                  assert fm['name'] == f.parent.name and isinstance(fm['description'], str) and fm['description'].strip()
+              except Exception as e:
+                  print(f"❌ {f}: {e!r}"); bad = 1
+          sys.exit(bad)
+          PY

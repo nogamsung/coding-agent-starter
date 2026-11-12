@@ -1,0 +1,103 @@
+name: Harness CI
+
+# 스타터 자체의 하네스 검증 — 훅·git 훅·스크립트 문법, 스크립트 단위 테스트, Codex 에이전트 동기화,
+# skill frontmatter, .claude/skills 심볼릭 링크, .codex/hooks.json.
+# 설치 시나리오는 install-matrix.yml 이 담당.
+on:
+  pull_request:
+    paths:
+      - '.claude/**'
+      - '.agents/**'
+      - '.codex/**'
+      - 'AGENTS.md'
+      - '.github/workflows/harness-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Shell syntax (hooks · githooks · scripts · templates)
+        run: |
+          set -euo pipefail
+          FAIL=0
+          for f in .claude/hooks/*.sh .claude/githooks/* .claude/scripts/*.sh .claude/templates/cicd/*.sh bootstrap.sh; do
+            [ -f "$f" ] || continue
+            bash -n "$f" || { echo "❌ $f"; FAIL=1; }
+          done
+          [ "$FAIL" = 0 ]
+
+      - name: shellcheck (참고용, 실패해도 통과)
+        continue-on-error: true
+        run: |
+          command -v shellcheck >/dev/null || { echo "shellcheck 없음 — 건너뜀"; exit 0; }
+          shellcheck -S warning .claude/hooks/*.sh .claude/githooks/* .claude/scripts/*.sh || true
+
+      - name: Script unit tests
+        run: python3 -m unittest discover -s .claude/scripts/tests -p 'test_*.py' -v
+
+      - name: Hook smoke tests
+        run: bash .claude/scripts/tests/test_hooks.sh
+
+      - name: Codex agents in sync (gen-codex-agents --check)
+        run: |
+          if [ -f .claude/scripts/gen-codex-agents.py ]; then
+            python3 .claude/scripts/gen-codex-agents.py --check
+          else
+            echo "::warning::gen-codex-agents.py 없음 — 건너뜀"
+          fi
+
+      - name: Skill layout — .claude/skills → ../.agents/skills symlink + frontmatter
+        run: |
+          set -euo pipefail
+          [ -L .claude/skills ] || { echo "❌ .claude/skills 가 심볼릭 링크가 아님"; exit 1; }
+          [ "$(readlink .claude/skills)" = "../.agents/skills" ] || { echo "❌ .claude/skills → $(readlink .claude/skills) (기대: ../.agents/skills)"; exit 1; }
+          pip install --quiet pyyaml
+          python3 - <<'PY'
+          import pathlib, sys, yaml
+          bad = 0
+          skills = sorted(pathlib.Path('.agents/skills').glob('*/SKILL.md'))
+          if not skills:
+              print('❌ .agents/skills/*/SKILL.md 없음'); sys.exit(1)
+          for f in skills:
+              t = f.read_text()
+              if not t.startswith('---\n') or '\n---\n' not in t[4:]:
+                  print(f'❌ {f}: frontmatter 없음'); bad = 1; continue
+              raw = t[4:t.index('\n---\n', 4)]
+              try:
+                  fm = yaml.safe_load(raw)
+              except yaml.YAMLError as e:
+                  print(f'❌ {f}: YAML 오류 {e}'); bad = 1; continue
+              if not isinstance(fm, dict):
+                  print(f'❌ {f}: frontmatter 가 매핑이 아님'); bad = 1; continue
+              if fm.get('name') != f.parent.name:
+                  print(f"❌ {f}: name={fm.get('name')!r} != 디렉토리 {f.parent.name!r}"); bad = 1
+              d = fm.get('description')
+              if not isinstance(d, str) or not d.strip() or '\n' in d.strip():
+                  print(f'❌ {f}: description 은 한 줄 문자열이어야 함'); bad = 1
+              elif len(d) > 300:
+                  print(f'❌ {f}: description {len(d)}자 > 300 (매 세션 로드)'); bad = 1
+          print(f'skills: {len(skills)}개 검사')
+          sys.exit(bad)
+          PY
+
+      - name: .codex/hooks.json · templates JSON valid
+        run: |
+          set -euo pipefail
+          for f in .codex/hooks.json .claude/templates/codex/hooks.json .claude/templates/optional-skills.json; do
+            [ -f "$f" ] || continue
+            jq -e . "$f" >/dev/null || { echo "❌ $f: invalid JSON"; exit 1; }
+            echo "✅ $f"
+          done

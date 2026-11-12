@@ -1,0 +1,20 @@
+# gitleaks 설정 — 기본 규칙 + 이 저장소에서 확인된 오탐만 허용한다.
+# /init 이 루트 .gitleaks.toml 로 복사한다.
+# 쓰는 곳: .claude/githooks/pre-commit(gitleaks 설치 시 스테이징 변경분) · CI secret-scan.yml(PR 커밋 범위)
+# 새 오탐은 경로를 넓게 열지 말고 그 파일만 추가하고, 이유를 한 줄 남긴다.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "확인된 오탐"
+paths = [
+  # 테스트 전용 고정 키·토큰 (실제 시크릿을 테스트 코드에 두지 않는다)
+  '''(^|/)src/test/''',
+  '''(^|/)tests?/fixtures/''',
+  # 문서·skill 예시 값
+  '''\.agents/skills/[^/]+/SKILL\.md''',
+  # 예시 환경 파일 (실제 값 금지 — 자리표시자만)
+  '''(^|/)\.env\.example$''',
+  # 예: 앱에 실려 배포되는 공개 식별자 (Firebase 클라이언트 키 등) — 필요할 때 주석 해제 후 경로 고정
+  # '''android/app/google-services\.json''',
+]

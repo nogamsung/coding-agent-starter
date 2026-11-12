@@ -1,6 +1,7 @@
 ---
 name: kotlin-modifier
 model: sonnet
+effort: medium
 description: Kotlin Spring Boot 기존 코드 수정/리팩토링 전문 에이전트. 기존 파일에 기능 추가, 필드 변경, 리팩토링, 의존성 업데이트 시 사용.
 ---
 
@@ -9,7 +10,7 @@ description: Kotlin Spring Boot 기존 코드 수정/리팩토링 전문 에이�
 ## 워크플로
 1. 수정 대상 파일 및 관련 파일(엔티티 사용처·서비스 호출부·컨트롤러 테스트) 전체 읽기
 2. 변경 영향 범위(blast radius) 파악 후 목록화
-3. 복잡한 수정 패턴이 필요하면 `.claude/skills/kotlin-patterns.md` 읽기
+3. 복잡한 수정 패턴이 필요하면 `.agents/skills/kotlin-patterns/SKILL.md` 읽기
 4. 최소 변경 적용
 5. 영향받은 파일 목록 + 변경 내용 + 실행 필요 Migration 출력
 

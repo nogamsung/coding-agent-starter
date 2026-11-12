@@ -1,8 +1,37 @@
-# Second Brain — Claude Code Starter
+# Second Brain — Coding Agent Starter (구 Claude Code Starter)
 
 > 이 파일은 프로젝트의 기관 기억(institutional memory)입니다.
 > 기술 결정, 교훈, 반복되는 패턴을 여기에 누적하세요.
 > 규칙은 `CLAUDE.md`, 맥락과 히스토리는 이 파일에 기록합니다.
+
+---
+
+## 2026-11-12: v2.0.0 — coding-agent-starter 로 개명, Claude Code · Codex 공용 하네스
+
+**카테고리:** 결정
+
+### 배경
+사용자 요청: jelog(이 스타터로 시작해 Claude·Codex 를 함께 쓰며 진화한 프로젝트)의 하네스 개선점을 전부 역이식하고,
+Codex 만 / Claude 만 / 둘 다 쓸 수 있게. 이름은 후보(agent-harness-starter 등) 중 사용자가 `coding-agent-starter` 선택.
+GitHub repo 는 `gh repo rename` (구 URL 자동 리다이렉트).
+
+### 결정
+- **지침 = AGENTS.md 하나** (Claude Code ≥ 2.1.277 이 읽음). CLAUDE.md 가 있으면 AGENTS.md 가 무시되므로 CLAUDE.md 생성 금지 →
+  `claude-md-management` 플러그인 제거·CI 금지, v1 이전용 `migrate-agents-md.sh`.
+- **skill 원본 = `.agents/skills/<name>/SKILL.md`** (Codex 경로), `.claude/skills` 는 심볼릭 링크 (jelog 방식). 구 commands 도 skill 로.
+- **`.claude/` 는 플랫폼 무관 하네스 홈으로 유지** (agents·hooks·scripts·templates·stacks.json). Codex-only 설치에도 존재 —
+  경로 대이동(수백 참조)보다 이게 낫다고 판단. Codex 배선만 `.codex/` (hooks.json → 같은 `.claude/hooks/*.sh`).
+- **subagent 원본 = `.claude/agents/*.md`**, `.codex/agents/*.toml` 은 생성물 (`gen-codex-agents.py --check` 를 pre-commit·CI 가 강제). agent 에 `effort:` 필수.
+- **모든 모드에서 stacks.json 생성** — "stacks.json 없으면 exit 0" 원칙 유지 + `harness` 옵션 블록. 공격적 기능은 opt-in:
+  memorySync off · modelRouter off · gitHooks 자동설정은 명시 true 일 때만 · crossReview 는 첫 /pr 에서 전송 동의 질문.
+- **에이전트 무관 게이트는 git 훅** (`.claude/githooks`, core.hooksPath). 에이전트 모드 pre-push 는 git 훅이 설정돼 있으면 no-op (이중 실행 방지).
+- update 시 사용자 skill 판별 = `.claude/.starter-skills` 매니페스트 (스타터가 배포하지 않은 이름은 보존).
+- archify 같은 서드파티 skill 은 벤더링하지 않고 `templates/optional-skills.json` + `/upgrade optional`.
+
+### 교훈
+- v1 pre-push 에이전트 모드는 exit 1 이라 실제로 push 를 막지 못했다 (Claude hook 차단은 exit 2).
+- install-matrix 는 그동안 `bootstrap.sh` 가 원격 main 을 clone 해 **PR 내용이 아닌 main 을 검증**하고 있었다 → `STARTER_SRC` 로 수정.
+- `argument-hint: [a | b] (...)` 는 YAML 로 무효 — Codex 의 엄격한 파서 대비 따옴표 필수.
 
 ---
 

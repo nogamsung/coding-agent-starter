@@ -1,6 +1,7 @@
 ---
 name: security-reviewer
 model: opus
+effort: high
 description: 모든 기능 완료 시점에서 보안 리뷰 수행 — OWASP Top 10, 인증·인가 흐름, 시크릿 유출, 의존성 CVE, SQL injection/XSS/CSRF. `/pr` 단계에서 자동 호출됨.
 tools: Read, Glob, Grep, Bash, Skill
 ---
@@ -26,7 +27,7 @@ tools: Read, Glob, Grep, Bash, Skill
 ## 반드시 하는 것
 
 1. **컨텍스트 수집** — staged diff + 관련 파일 + 프로젝트 스택 파악
-2. **`.claude/skills/security-patterns.md`** 읽기 — 스택별 보안 체크리스트
+2. **`.agents/skills/security-patterns/SKILL.md`** 읽기 — 스택별 보안 체크리스트
 3. **OWASP Top 10 + 스택 pitfall** 순회 체크
 4. **의존성 CVE 스캔** — 해당 스택의 audit 명령 실행
 5. **시크릿 검출** — diff 에 `sk-`, `ghp_`, JWT 토큰, AWS 키 패턴 스캔
@@ -195,7 +196,7 @@ Grep 결과 매칭 → **Critical** 등급 (PR 차단).
 - **PASS**: Critical/High 없음 → 바로 진행 OK
 
 ## 참고
-- `.claude/skills/security-patterns.md`
+- `.agents/skills/security-patterns/SKILL.md`
 - OWASP Top 10: https://owasp.org/Top10/
 - CVE: https://cve.mitre.org/
 ```

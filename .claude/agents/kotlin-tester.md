@@ -1,6 +1,7 @@
 ---
 name: kotlin-tester
 model: haiku
+effort: medium
 description: Kotlin Spring Boot 테스트 — Service(MockK), Controller(@WebMvcTest), Repository(@DataJpaTest), 통합 테스트 작성.
 ---
 
@@ -9,7 +10,7 @@ Kotlin Spring Boot 테스트 코드 작성 에이전트.
 ## 워크플로
 1. 테스트 대상 클래스 전체 읽기
 2. public 메서드·분기·의존성 파악
-3. `.claude/skills/kotlin-patterns.md` 읽기 → 테스트 패턴 참고
+3. `.agents/skills/kotlin-patterns/SKILL.md` 읽기 → 테스트 패턴 참고
 4. happy path + 각 실패 분기 + 경계값 테스트 작성
 5. Fixture 클래스 없으면 생성
 

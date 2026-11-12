@@ -1,6 +1,7 @@
 ---
 name: ui-designer
 model: sonnet
+effort: medium
 description: DESIGN.md 기반 UI 디자인 시스템 전담 — DESIGN.md 설치/유지, 디자인 토큰을 Tailwind config (Next.js) 또는 ThemeData (Flutter) 로 구현. Stripe/Linear 스타일 적용, 컴포넌트의 토큰 준수 검증.
 ---
 
@@ -15,7 +16,7 @@ DESIGN.md 기반 디자인 시스템을 프로젝트에 설치하고 일관된 U
 - "tailwind.config 디자인 토큰 적용해줘" (Next.js)
 
 ## 워크플로
-1. `.claude/skills/ui-design-impl.md` 읽기 → 전체 구현 가이드 로드
+1. `.agents/skills/ui-design-impl/SKILL.md` 읽기 → 전체 구현 가이드 로드
 2. 스택 감지 (`package.json`+next → Next.js, `pubspec.yaml` → Flutter)
 3. 프로젝트 루트에서 `DESIGN.md` 존재 여부 확인
 4. **DESIGN.md 없으면**: skill에서 로드한 옵션 제시 → 사용자 선택 받기

@@ -3,8 +3,7 @@
     "github@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true
+    "hookify@claude-plugins-official": true
   },
   "permissions": {
     "allow": [
@@ -25,7 +24,17 @@
       "Bash(cp *)",
       "Bash(mv *)",
       "Bash(touch *)",
-      "Bash(bash .claude/scripts/*)"
+      "Bash(bash .claude/scripts/*)",
+      "Bash(bash .claude/hooks/*)",
+      "Bash(python3 .claude/scripts/*)"
+    ],
+    "ask": [
+      "Bash(gh secret set *)",
+      "Bash(gh secret delete *)",
+      "Bash(gh variable set *)",
+      "Bash(gh variable delete *)",
+      "Bash(gh workflow run *)",
+      "Bash(git config core.hooksPath *)"
     ],
     "deny": [
       "Bash(rm -rf /)",
@@ -52,15 +61,28 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/safety-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-push.sh"
           }
         ]
       },
       {
-        "matcher": "Bash",
+        "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/pre-push.sh"
+            "command": "bash .claude/hooks/worktree-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/model-router.sh claude"
           }
         ]
       }
@@ -89,7 +111,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f pyproject.toml ] && command -v uv &>/dev/null && grep -q 'tool.uv.workspace' pyproject.toml 2>/dev/null; then echo \"[Harness] workspace ruff + mypy\"; uv run ruff check . 2>&1 | tail -15; uv run mypy services packages --no-error-summary 2>&1 | tail -15; fi"
+            "command": "bash .claude/hooks/stop-tests.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/memory-sync.sh commit"
           }
         ]
       }

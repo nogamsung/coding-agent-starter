@@ -12,8 +12,10 @@
 #       |nextjs|nextjs-multi|flutter|infra
 #       |marketing|sales|product|monorepo
 #
-# 보존 (항상): agents/custom/  commands/custom/  hooks/custom/  skills/custom/
+# 보존 (항상): agents/custom/  commands/custom/  hooks/custom/
+#              워크플로 skill(commit·pr·start 등) 전부 · 스타터가 모르는 skill 디렉토리(사용자 작성)
 #              settings.local.json  .starter-version*
+# skill 원본은 .agents/skills/<name>/SKILL.md (.claude/skills 는 그 심볼릭 링크)
 
 set -eo pipefail
 
@@ -44,7 +46,10 @@ fi
 # 모든 모드 공통
 KEEP_AGENTS_COMMON="code-reviewer security-reviewer planner"
 KEEP_SKILLS_COMMON="security-patterns observability-patterns mcp-presets"
-KEEP_TEMPLATES_COMMON="prd.md role-prompt.md memory.md"
+# 워크플로 skill (구 commands) — 모든 모드에서 유지
+WORKFLOW_SKILLS="commit harness init marketing memory merge new plan pr release review rule start starter test upgrade handoff"
+SKILLS_DIR=.agents/skills
+KEEP_TEMPLATES_COMMON="prd.md role-prompt.md memory.md gitleaks.toml optional-skills.json"
 
 # stack 별 유지 목록 (한 줄에 type:vals 형식)
 keep_for_stack() {
@@ -52,47 +57,47 @@ keep_for_stack() {
     kotlin|kotlin-multi)
       echo "agents: kotlin-generator kotlin-modifier kotlin-tester api-designer ui-designer github-actions-designer"
       echo "skills: kotlin-patterns db-patterns api-design-patterns github-actions-patterns docker-patterns cache-patterns"
-      echo "templates: CLAUDE.${1}.md settings.${1}.json"
+      echo "templates: AGENTS.${1}.md settings.${1}.json"
       ;;
     go|go-multi)
       echo "agents: go-generator go-modifier go-tester api-designer github-actions-designer"
       echo "skills: go-patterns db-patterns api-design-patterns github-actions-patterns docker-patterns cache-patterns"
-      echo "templates: CLAUDE.${1}.md settings.${1}.json"
+      echo "templates: AGENTS.${1}.md settings.${1}.json"
       ;;
     python|python-multi)
       echo "agents: python-generator python-modifier python-tester ai-researcher ai-generator ai-modifier ai-tester api-designer github-actions-designer"
       echo "skills: python-patterns ai-patterns ai-eval-patterns db-patterns api-design-patterns github-actions-patterns docker-patterns cache-patterns"
-      echo "templates: CLAUDE.${1}.md settings.${1}.json"
+      echo "templates: AGENTS.${1}.md settings.${1}.json"
       ;;
     nextjs|nextjs-multi)
       echo "agents: nextjs-generator nextjs-modifier nextjs-tester ui-designer github-actions-designer"
-      echo "skills: nextjs-patterns ui-design-impl github-actions-patterns docker-patterns cache-patterns"
-      echo "templates: CLAUDE.${1}.md settings.${1}.json"
+      echo "skills: nextjs-patterns ui-design-impl motion-patterns github-actions-patterns docker-patterns cache-patterns"
+      echo "templates: AGENTS.${1}.md settings.${1}.json"
       ;;
     flutter)
       echo "agents: flutter-generator flutter-modifier flutter-tester ui-designer github-actions-designer"
-      echo "skills: flutter-patterns ui-design-impl github-actions-patterns"
-      echo "templates: CLAUDE.flutter.md settings.flutter.json"
+      echo "skills: flutter-patterns ui-design-impl motion-patterns github-actions-patterns"
+      echo "templates: AGENTS.flutter.md settings.flutter.json"
       ;;
     infra)
       echo "agents: infra-generator github-actions-designer"
       echo "skills: terraform-patterns kubernetes-patterns helm-patterns github-actions-patterns docker-patterns"
-      echo "templates: CLAUDE.infra.md settings.infra.json"
+      echo "templates: AGENTS.infra.md settings.infra.json"
       ;;
     marketing)
       echo "agents: gtm-planner"
       echo "skills:"
-      echo "templates: CLAUDE.marketing.md settings.marketing.json marketing-plan.md gtm-history.md"
+      echo "templates: AGENTS.marketing.md settings.marketing.json marketing-plan.md gtm-history.md"
       ;;
     sales)
       echo "agents: gtm-planner"
       echo "skills:"
-      echo "templates: CLAUDE.sales.md settings.sales.json sales-plan.md gtm-history.md"
+      echo "templates: AGENTS.sales.md settings.sales.json sales-plan.md gtm-history.md"
       ;;
     product)
       echo "agents: gtm-planner"
       echo "skills:"
-      echo "templates: CLAUDE.product.md settings.product.json marketing-plan.md sales-plan.md gtm-history.md"
+      echo "templates: AGENTS.product.md settings.product.json marketing-plan.md sales-plan.md gtm-history.md"
       ;;
     *)
       echo "❌ 알 수 없는 stack: $1" >&2
@@ -103,7 +108,7 @@ keep_for_stack() {
 
 # --- 모드별 유지 목록 누적 ---
 KEEP_AGENTS="$KEEP_AGENTS_COMMON"
-KEEP_SKILLS="$KEEP_SKILLS_COMMON"
+KEEP_SKILLS="$KEEP_SKILLS_COMMON $WORKFLOW_SKILLS"
 KEEP_TEMPLATES="$KEEP_TEMPLATES_COMMON"
 
 accumulate() {
@@ -123,7 +128,7 @@ if [ "$MODE" = "monorepo" ]; then
   # 공통 모노레포 자산
   KEEP_AGENTS="$KEEP_AGENTS github-actions-designer"
   KEEP_SKILLS="$KEEP_SKILLS github-actions-patterns"
-  KEEP_TEMPLATES="$KEEP_TEMPLATES CLAUDE.monorepo.md settings.monorepo.json"
+  KEEP_TEMPLATES="$KEEP_TEMPLATES AGENTS.monorepo.md settings.monorepo.json"
 
   if [ -z "$EXTRA_STACKS" ]; then
     echo "⚠️ monorepo 인데 감지된 stack 인자 없음 — 보수적으로 모든 코드 stack 유지" >&2
@@ -169,8 +174,27 @@ calc_removals_templates() {
   done
 }
 
+# 스타터가 배포하는 skill 이름 전체 — 이 목록 밖의 skill 디렉토리는 사용자 것이므로 건드리지 않는다
+known_skills() {
+  echo "$KEEP_SKILLS_COMMON $WORKFLOW_SKILLS"
+  for s in kotlin go python nextjs flutter infra marketing sales product; do
+    keep_for_stack "$s" | sed -n 's/^skills://p'
+  done
+}
+KNOWN_SKILLS=" $(known_skills | tr '\n' ' ') "
+
+calc_removals_skills() {
+  [ -d "$SKILLS_DIR" ] || return 0
+  for d in "$SKILLS_DIR"/*/; do
+    [ -f "$d/SKILL.md" ] || continue
+    local bn=$(basename "$d")
+    is_keep "$KNOWN_SKILLS" "$bn" || continue      # 사용자 skill
+    is_keep "$KEEP_SKILLS" "$bn" || echo "$SKILLS_DIR/$bn"
+  done
+}
+
 AGENTS_RM=$(calc_removals_dir .claude/agents "$KEEP_AGENTS" || true)
-SKILLS_RM=$(calc_removals_dir .claude/skills "$KEEP_SKILLS" || true)
+SKILLS_RM=$(calc_removals_skills || true)
 TEMPLATES_RM=$(calc_removals_templates || true)
 
 count_lines() { [ -z "$1" ] && echo 0 || echo "$1" | grep -c '^.'; }
@@ -184,10 +208,9 @@ T_CNT=$(count_lines "$TEMPLATES_RM")
 echo "=== /init cleanup (mode=$MODE${EXTRA_STACKS:+ extra=$EXTRA_STACKS}) ==="
 echo ""
 echo "보존 (항상):"
-echo "  .claude/agents/custom/    .claude/commands/custom/"
-echo "  .claude/hooks/custom/     .claude/skills/custom/"
+echo "  .claude/agents/custom/    .claude/commands/custom/    .claude/hooks/custom/"
 echo "  .claude/settings.local.json   .claude/.starter-version*"
-echo "  .claude/commands/*        (커맨드는 전부 유지)"
+echo "  워크플로 skill (commit·pr·start 등) · 스타터가 모르는 skill 디렉토리 (사용자 작성)"
 echo ""
 echo "제거 대상:"
 echo "  agents:    $A_CNT 개"
@@ -210,7 +233,7 @@ echo ""
 echo "🗑  제거 중..."
 
 [ -n "$AGENTS_RM" ]    && echo "$AGENTS_RM"    | xargs -r rm -f
-[ -n "$SKILLS_RM" ]    && echo "$SKILLS_RM"    | xargs -r rm -f
+[ -n "$SKILLS_RM" ]    && echo "$SKILLS_RM"    | xargs -r rm -rf
 [ -n "$TEMPLATES_RM" ] && echo "$TEMPLATES_RM" | xargs -r rm -f
 [ -d .github/assets ] && rm -rf .github/assets
 

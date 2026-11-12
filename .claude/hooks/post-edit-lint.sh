@@ -2,11 +2,11 @@
 # .claude/hooks/post-edit-lint.sh
 # PostToolUse(Edit|Write|MultiEdit) hook — 파일 확장자 기반 즉시 lint
 #
-# 단일 스택: 루트에서 바로 실행
-# 모노레포: stacks.json 읽어 해당 파일의 스택 경로에서 실행
-# 스택 도구 없으면 조용히 skip. 출력은 tail -20 으로 제한.
+# 스택 경로: .claude/stacks.json 의 stacks[] 중 파일이 속한 스택 (없으면 루트 — v1 단일 스택 폴백)
+# 스택 도구 없으면 조용히 skip. 출력은 tail -20 으로 제한. Codex 는 codex-adapter.sh 가 파일마다 같은 JSON 으로 부른다.
 
 INPUT=$(cat 2>/dev/null || echo '{}')
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 FILE=$(echo "$INPUT" | python3 -c "
 import sys, json
@@ -24,11 +24,10 @@ case "$FILE" in
   *.g.dart|*.freezed.dart|*.pb.go|*generated*|*/node_modules/*|*/.venv/*) exit 0 ;;
 esac
 
-# 스택 경로 결정 (모노레포면 stacks.json 으로 lookup)
-STACK_PATH=""
-if [ -f .claude/stacks.json ] && command -v jq &>/dev/null; then
-  STACK_PATH=$(jq -r --arg f "$FILE" '.stacks[]? | select($f | startswith(.path + "/")) | .path' .claude/stacks.json 2>/dev/null | head -1)
-fi
+# 루트 기준 상대 경로 → 스택 경로 결정
+cd "$ROOT" 2>/dev/null || exit 0
+case "$FILE" in "$ROOT"/*) FILE="${FILE#$ROOT/}" ;; esac
+STACK_PATH=$(stack_for_file "$FILE" | cut -f2)
 [ -z "$STACK_PATH" ] && STACK_PATH="."
 REL=${FILE#$STACK_PATH/}
 
@@ -53,13 +52,13 @@ case "$FILE" in
     esac
     echo "  → 또는 'security-reviewer' agent 호출 (CVE + 라이선스 + 의존성 취약점)"
     ;;
-  *CLAUDE.md|*CLAUDE.*.md)
+  *AGENTS.md|*AGENTS.*.md|*CLAUDE.md|*CLAUDE.*.md)
     if [ -f "$FILE" ]; then
       LINES=$(wc -l < "$FILE" | tr -d ' ')
       if [ "$LINES" -gt 300 ]; then
         echo "[Harness] ⚠️ $FILE: $LINES 줄 (>300)"
-        echo "  → 상세 내용을 .claude/skills/{topic}.md 또는 docs/{topic}.md 로 이관하고"
-        echo "    CLAUDE.md 에는 \`상세: .claude/skills/{topic}.md\` 인덱스 한 줄만 남기세요."
+        echo "  → 상세 내용을 .agents/skills/{topic}/SKILL.md 또는 docs/{topic}.md 로 이관하고"
+        echo "    지침 파일에는 \`상세: .agents/skills/{topic}/SKILL.md\` 인덱스 한 줄만 남기세요."
       fi
     fi
     ;;

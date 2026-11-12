@@ -1,18 +1,18 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-code-starter",
-  "description": "Korean-first Claude Code starter — pre-configured commands · agents · skills for Kotlin / Go / Python / Next.js / Flutter / DevOps stacks. The full bootstrap.sh install (entire .claude/ + hooks + templates) remains the primary entry point; this plugin path provides commands · agents · skills only.",
+  "name": "coding-agent-starter",
+  "description": "Korean-first coding-agent starter (Claude Code · Codex) — pre-configured commands · agents · skills for Kotlin / Go / Python / Next.js / Flutter / DevOps stacks. The full bootstrap.sh install (entire .claude/ + hooks + templates) remains the primary entry point; this plugin path provides commands · agents · skills only.",
   "owner": {
     "name": "nogamsung",
     "email": "gs97ahn@gmail.com"
   },
   "plugins": [
     {
-      "name": "claude-code-starter",
+      "name": "coding-agent-starter",
       "description": "All commands · agents · skills from the starter (kotlin/go/python/nextjs/flutter/infra/marketing/sales/product modes). For full install incl. hooks · templates · settings.json, prefer `bootstrap.sh`.",
       "source": ".",
       "category": "development",
-      "homepage": "https://github.com/nogamsung/claude-code-starter",
+      "homepage": "https://github.com/nogamsung/coding-agent-starter",
       "tags": ["starter", "korean", "harness", "multi-stack"]
     }
   ]

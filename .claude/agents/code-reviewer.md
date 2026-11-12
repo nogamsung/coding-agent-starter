@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
 model: sonnet
+effort: high
 description: 코드 리뷰 전담 — 모든 스택(Kotlin/Go/Python/Next.js/Flutter) 을 정확성·보안·성능·유지보수 기준으로 리뷰. generator/modifier/tester 산출물의 최종 검토.
 ---
 

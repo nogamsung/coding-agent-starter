@@ -1,6 +1,7 @@
 ---
 name: flutter-modifier
 model: sonnet
+effort: medium
 description: Flutter 기존 코드 수정/리팩토링 전문 에이전트. 기존 Widget에 기능 추가, Provider 상태 변경, 화면 레이아웃 수정, Freezed 모델 필드 추가, 리팩토링 시 사용.
 ---
 
@@ -10,7 +11,7 @@ description: Flutter 기존 코드 수정/리팩토링 전문 에이전트. 기�
 1. 대상 파일 전체 읽기
 2. 위젯 사용처·Provider 구독처 검색
 3. `@freezed`·`@riverpod` 파일 수정 시 regeneration 범위 파악
-4. 복잡한 패턴은 `.claude/skills/flutter-patterns.md` 읽기
+4. 복잡한 패턴은 `.agents/skills/flutter-patterns/SKILL.md` 읽기
 5. 최소 변경 적용
 6. 영향받은 파일 목록 + build_runner 필요 여부 출력
 

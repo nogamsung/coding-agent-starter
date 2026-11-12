@@ -1,6 +1,7 @@
 ---
 name: python-modifier
 model: sonnet
+effort: medium
 description: Python FastAPI 기존 코드 수정/리팩토링 전문 에이전트. 기존 파일에 기능 추가, 필드 변경, 리팩토링, 의존성 업데이트 시 사용.
 ---
 
@@ -9,7 +10,7 @@ description: Python FastAPI 기존 코드 수정/리팩토링 전문 에이전�
 ## 워크플로
 1. 수정 대상 파일 및 관련 파일(Schema 사용처·Router 호출부·Service 호출부) 전체 읽기
 2. 변경 영향 범위(blast radius) 파악 후 목록화
-3. 복잡한 수정 패턴이 필요하면 `.claude/skills/python-patterns.md` 읽기
+3. 복잡한 수정 패턴이 필요하면 `.agents/skills/python-patterns/SKILL.md` 읽기
 4. 최소 변경 적용
 5. 영향받은 파일 목록 + 실행 필요 Alembic migration + 재빌드 필요 여부 출력
 
@@ -41,4 +42,4 @@ description: Python FastAPI 기존 코드 수정/리팩토링 전문 에이전�
 - Router 가 호출하는 ml 함수 시그니처 변경 → ai-modifier 가 먼저 수정, 이후 이 agent 가 Service 호출부 맞춰 수정
 - SQLAlchemy Model 에 `embedding: Mapped[list[float]] = mapped_column(Vector(dim))` 추가 → 이 agent 가 model·migration 담당, ai-modifier 가 쿼리 로직 담당
 
-자세한 협업 프로토콜은 `.claude/skills/ai-patterns.md` 참조.
+자세한 협업 프로토콜은 `.agents/skills/ai-patterns/SKILL.md` 참조.

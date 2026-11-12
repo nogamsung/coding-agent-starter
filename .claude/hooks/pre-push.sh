@@ -1,281 +1,196 @@
 #!/bin/bash
 # .claude/hooks/pre-push.sh
-# Claude Code Pre-push 커버리지 게이트
+# Pre-push 빌드·커버리지 게이트 (Claude·Codex·터미널 공통)
 #
-# git push 감지 시 테스트 실행 → 라인 커버리지 90% 미만이면 푸시 차단.
+# git push 시: 빌드 게이트(build-gate.sh) → 바뀐 스택 테스트(커버리지 리포트 생성) → 판정.
+# 판정은 .claude/scripts/coverage-gate.py 하나 — CI 도 같은 스크립트로 다시 강제하면 --no-verify 로 넘겨도 막힌다.
+#   손댄 스택은 각각 라인 커버리지 ≥ harness.coverage (기본 90, 0 이면 커버리지 판정 끔).
+#   스택 목록·타입은 .claude/stacks.json 의 stacks[]. 없으면(v1 단일 스택) 루트에서 타입을 추론한다.
 #
-# 동작 모드:
-#   모노레포:  .claude/stacks.json 이 존재하면 각 stack.path 에서 순차 검증.
-#              한 스택이라도 실패하면 전체 차단.
-#   단일 스택: stacks.json 이 없으면 루트 디렉토리에서 자동 감지.
+# 호출 방식:
+#   git 훅:    .claude/githooks/pre-push 가 `--git-hook` 으로 호출 (기본 — 어떤 도구로 push 해도 동작).
+#              stdin = git 이 주는 ref 목록. 태그·브랜치 삭제만 push 하면 건너뛴다. 우회: git push --no-verify
+#   에이전트 훅: PreToolUse(Bash) — stdin JSON 의 명령이 git push 일 때만 동작, 실패 시 exit 2(차단).
+#              core.hooksPath 가 git 훅 디렉토리로 설정돼 있으면 git 훅이 돌므로 여기선 아무것도 안 한다(중복 방지).
 #
-# 지원 스택 (각 스택의 실행 디렉토리 기준):
-#   kotlin / kotlin-multi → Jacoco (build/reports/jacoco/test/jacocoTestReport.xml)
-#   go / go-multi         → go test -coverprofile=coverage.out ./...
-#   python / python-multi → uv run pytest --cov (coverage.xml)
-#   nextjs / nextjs-multi → Jest --coverage (coverage/coverage-summary.json)
-#   flutter               → flutter test --coverage (coverage/lcov.info)
+# 지원 스택 (각 스택 경로 기준):
+#   kotlin*  → ./gradlew test jacocoTestReport          (JaCoCo XML)
+#   go*      → go test -coverprofile=coverage.out ./...  (go.work 면 모듈마다)
+#   python*  → uv run pytest --cov --cov-report=xml      (coverage.xml)
+#   nextjs*  → jest --coverage --coverageReporters=json-summary (스택 루트 또는 apps/*·packages/* 의 jest 보유 패키지)
+#   flutter* → flutter test --coverage                   (스택 루트 또는 test/ 보유 하위 패키지)
+#   infra    → 커버리지 없음 (빌드 게이트만)
 
 INPUT=$(cat 2>/dev/null || echo '{}')
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$HOOK_DIR/lib.sh"
 
-CMD=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('tool_input', {}).get('command', ''))
-except:
-    print('')
-" 2>/dev/null || echo '')
-
-# git push 가 아니면 즉시 통과
-if [[ "$CMD" != *"git push"* ]]; then
-  exit 0
+if [ "$1" = "--git-hook" ]; then
+  MODE=git
+  # 줄마다 "<local ref> <local sha> <remote ref> <remote sha>" — 브랜치 커밋을 올릴 때만 게이트
+  NEEDS_GATE=0; PUSH_SHAS=""
+  while read -r _ LOCAL_SHA REMOTE_REF _; do
+    [ -z "$LOCAL_SHA" ] && continue
+    [[ "$LOCAL_SHA" =~ ^0+$ ]] && continue
+    [[ "$REMOTE_REF" == refs/tags/* ]] && continue
+    NEEDS_GATE=1; PUSH_SHAS="$PUSH_SHAS $LOCAL_SHA"
+  done <<< "$INPUT"
+  [ "$NEEDS_GATE" -eq 1 ] || exit 0
+else
+  MODE=agent
+  INPUT_CMD=$(hook_field tool_input.command)
+  [[ "$INPUT_CMD" == *"git push"* ]] || exit 0
+  [[ "$INPUT_CMD" == *"--no-verify"* ]] && { echo "[Pre-push] --no-verify — 게이트 건너뜀"; exit 0; }
+  # git 훅이 켜져 있으면 그쪽이 돈다
+  HP=$(git -C "$ROOT" config core.hooksPath 2>/dev/null)
+  if [ -n "$HP" ]; then
+    case "$HP" in /*) ;; *) HP="$ROOT/$HP" ;; esac
+    [ -x "$HP/pre-push" ] || [ -f "$HP/pre-push" ] && exit 0
+  fi
 fi
 
-THRESHOLD=90
+cd "$ROOT" || exit 0
+fail_exit() { [ "$MODE" = git ] && exit 1 || exit 2; }
+
+# 통과 기록 — git 은 원격에 먼저 연결한 뒤 훅을 돌려서 게이트가 길면 SSH 가 끊길 수 있다.
+# 같은 커밋을 다시 push 하면 게이트를 건너뛰어 바로 올라가게 한다.
+PASS_FILE="$(git rev-parse --path-format=absolute --git-dir 2>/dev/null)/coding-agent-gate-passed"
+if [ "$MODE" = git ] && [ -n "$PUSH_SHAS" ]; then
+  ALL=1
+  for SHA in $PUSH_SHAS; do grep -qxF "$SHA" "$PASS_FILE" 2>/dev/null || ALL=0; done
+  [ "$ALL" -eq 1 ] && { echo "[Pre-push] 이 커밋은 이미 게이트를 통과함 — 건너뜀"; exit 0; }
+fi
+
+command -v python3 &>/dev/null || { echo "[Pre-push] python3 없음 — 게이트 건너뜀"; exit 0; }
+source "$HOOK_DIR/timing.sh"
+
+# ── 대상 스택 ───────────────────────────────────────────────────
+if have_stacks; then
+  TARGETS=$(changed_files | coverage_gate changed-stacks 2>/dev/null)
+  THRESHOLD=$(coverage_gate threshold 2>/dev/null || echo 90)
+else
+  T=$(detect_stack_type "$ROOT")
+  [ -z "$T" ] && exit 0
+  TARGETS=$(printf '%s\t.' "$T")
+  THRESHOLD=90
+fi
+[ -z "$TARGETS" ] && { echo "[Pre-push] 바뀐 스택 없음 — 통과"; exit 0; }
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo " [Pre-push] 커버리지 게이트 (기준: ${THRESHOLD}%)"
+echo " [Pre-push] 빌드·커버리지 게이트 (기준: ${THRESHOLD}%)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ─────────────────────────────────────────────────────────────
-# 단일 스택 커버리지 검증 함수
-#   $1: 스택 경로 (예: . , backend, web, app)
-#   $2: 스택 타입 (kotlin | kotlin-multi | go | go-multi | nextjs | nextjs-multi | flutter | auto)
-#   반환: 0 = 통과, 1 = 실패
-# ─────────────────────────────────────────────────────────────
-check_stack_coverage() {
-  local SPATH="$1"
-  local STYPE="$2"
-  local COVERAGE="0"
-  local STACK_LABEL=""
-  local RET=0
-
-  pushd "$SPATH" >/dev/null 2>&1 || { echo "[Pre-push] ⚠️  경로 없음: $SPATH"; return 1; }
-
-  # auto 모드 — 파일 마커로 타입 추론
-  if [ "$STYPE" = "auto" ]; then
-    if [ -f "./gradlew" ]; then STYPE="kotlin"
-    elif [ -f "go.mod" ]; then STYPE="go"
-    elif [ -f "pyproject.toml" ] && command -v uv &>/dev/null && grep -q "fastapi" pyproject.toml 2>/dev/null; then STYPE="python"
-    elif [ -f "package.json" ] && node -e "require('./package.json').dependencies?.next || require('./package.json').devDependencies?.next || process.exit(1)" 2>/dev/null; then STYPE="nextjs"
-    elif [ -f "pubspec.yaml" ] && command -v flutter &>/dev/null; then STYPE="flutter"
-    else
-      echo "[Pre-push] ℹ️  [$SPATH] 지원 스택 감지 실패 — 건너뜀"
-      popd >/dev/null; return 0
-    fi
+# ① 빌드 게이트
+if have_stacks; then
+  T0=$(date +%s)
+  bash "$HOOK_DIR/build-gate.sh"; R=$?
+  timing_log pre-push:build "$T0" "$R"
+  if [ "$R" -ne 0 ]; then
+    echo "[Pre-push] ❌ 빌드 게이트 실패 — 푸시 차단 (긴급 시 git push --no-verify)"
+    fail_exit
   fi
+fi
 
-  case "$STYPE" in
-    kotlin|kotlin-multi)
-      STACK_LABEL="Kotlin Spring Boot"
-      echo "[Pre-push] [$SPATH] 스택: $STACK_LABEL"
-      echo "[Pre-push] ./gradlew test jacocoTestReport 실행 중..."
-      if ! ./gradlew test jacocoTestReport --daemon -q 2>&1; then
-        echo "[Pre-push] ❌ [$SPATH] 테스트 실패"
-        popd >/dev/null; return 1
-      fi
-      local REPORT="build/reports/jacoco/test/jacocoTestReport.xml"
-      # kotlin-multi: 루트에 없으면 하위 모듈에서 합산
-      if [ ! -f "$REPORT" ] && [ "$STYPE" = "kotlin-multi" ]; then
-        COVERAGE=$(python3 - <<'PYEOF'
-import xml.etree.ElementTree as ET, glob
-missed = covered = 0
-for f in glob.glob("**/build/reports/jacoco/test/jacocoTestReport.xml", recursive=True):
-    try:
-        root = ET.parse(f).getroot()
-        for c in root.findall('.//counter[@type="LINE"]'):
-            missed  += int(c.get("missed", 0))
-            covered += int(c.get("covered", 0))
-    except: pass
-total = missed + covered
-print(f"{covered / total * 100:.1f}" if total > 0 else "0")
-PYEOF
-)
-      elif [ -f "$REPORT" ]; then
-        COVERAGE=$(python3 - <<PYEOF
-import xml.etree.ElementTree as ET
-try:
-    root = ET.parse("$REPORT").getroot()
-    counters = root.findall('.//counter[@type="LINE"]')
-    missed  = sum(int(c.get("missed", 0)) for c in counters)
-    covered = sum(int(c.get("covered", 0)) for c in counters)
-    total = missed + covered
-    print(f"{covered / total * 100:.1f}" if total > 0 else "0")
-except Exception:
-    print("0")
-PYEOF
-)
-      else
-        echo "[Pre-push] ⚠️  [$SPATH] Jacoco 리포트 없음: $REPORT"
-        echo "           build.gradle.kts 에 jacoco 플러그인이 설정되어 있는지 확인하세요."
-        popd >/dev/null; return 1
-      fi
-      ;;
+COVERAGE_ON=1
+python3 -c "import sys; sys.exit(0 if float('$THRESHOLD') > 0 else 1)" 2>/dev/null || COVERAGE_ON=0
+[ "$COVERAGE_ON" -eq 0 ] && { echo "[Pre-push] 커버리지 기준 0 — 커버리지 판정 꺼짐"; exit 0; }
 
-    go|go-multi)
-      STACK_LABEL="Go Gin"
-      echo "[Pre-push] [$SPATH] 스택: $STACK_LABEL"
-      echo "[Pre-push] go test -coverprofile=coverage.out ./... 실행 중..."
-      if ! go test -coverprofile=coverage.out ./... 2>&1; then
-        echo "[Pre-push] ❌ [$SPATH] 테스트 실패"
-        popd >/dev/null; return 1
-      fi
-      if [ ! -f coverage.out ]; then
-        echo "[Pre-push] ⚠️  [$SPATH] coverage.out 없음"
-        popd >/dev/null; return 1
-      fi
-      COVERAGE=$(go tool cover -func=coverage.out 2>/dev/null | awk '/^total:/ {gsub("%","",$3); print $3}')
-      [ -z "$COVERAGE" ] && COVERAGE="0"
-      ;;
+run() { local n="$1"; shift; "$@" 2>&1 | tail -"$n"; return "${PIPESTATUS[0]}"; }
 
-    python|python-multi)
-      STACK_LABEL="Python FastAPI"
-      echo "[Pre-push] [$SPATH] 스택: $STACK_LABEL"
-      if ! command -v uv &>/dev/null; then
-        echo "[Pre-push] ⚠️  [$SPATH] uv 명령이 없음 — 건너뜀"
-        popd >/dev/null; return 0
-      fi
-      echo "[Pre-push] uv run pytest --cov --cov-report=xml 실행 중..."
-      if ! uv run pytest --cov --cov-report=xml --cov-report=term 2>&1; then
-        echo "[Pre-push] ❌ [$SPATH] 테스트 실패"
-        popd >/dev/null; return 1
-      fi
-      if [ ! -f coverage.xml ]; then
-        echo "[Pre-push] ⚠️  [$SPATH] coverage.xml 없음 — pytest-cov 설치 확인"
-        popd >/dev/null; return 1
-      fi
-      COVERAGE=$(python3 - <<'PYEOF'
-import xml.etree.ElementTree as ET
-try:
-    root = ET.parse("coverage.xml").getroot()
-    rate = root.get("line-rate")
-    print(f"{float(rate) * 100:.1f}" if rate else "0")
-except Exception:
-    print("0")
-PYEOF
-)
-      ;;
-
-    nextjs|nextjs-multi)
-      STACK_LABEL="Next.js"
-      echo "[Pre-push] [$SPATH] 스택: $STACK_LABEL"
-      echo "[Pre-push] npx jest --coverage 실행 중..."
-      if ! npx jest --coverage --coverageReporters=json-summary --passWithNoTests 2>&1; then
-        echo "[Pre-push] ❌ [$SPATH] 테스트 실패"
-        popd >/dev/null; return 1
-      fi
-      if [ ! -f coverage/coverage-summary.json ]; then
-        echo "[Pre-push] ⚠️  [$SPATH] 커버리지 리포트 없음"
-        popd >/dev/null; return 1
-      fi
-      COVERAGE=$(node -e "
-try {
-  const d = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json','utf8'));
-  console.log(d.total.lines.pct);
-} catch(e) { console.log('0'); }
-" 2>/dev/null || echo '0')
-      ;;
-
-    flutter)
-      STACK_LABEL="Flutter"
-      echo "[Pre-push] [$SPATH] 스택: $STACK_LABEL"
-      echo "[Pre-push] flutter test --coverage 실행 중..."
-      if ! flutter test --coverage 2>&1; then
-        echo "[Pre-push] ❌ [$SPATH] 테스트 실패"
-        popd >/dev/null; return 1
-      fi
-      if [ ! -f coverage/lcov.info ]; then
-        echo "[Pre-push] ⚠️  [$SPATH] lcov.info 없음"
-        popd >/dev/null; return 1
-      fi
-      COVERAGE=$(python3 - <<'PYEOF'
-lf = lh = 0
-try:
-    with open("coverage/lcov.info") as f:
-        for line in f:
-            if line.startswith("LF:"):
-                lf += int(line.strip().split(":")[1])
-            elif line.startswith("LH:"):
-                lh += int(line.strip().split(":")[1])
-    print(f"{lh / lf * 100:.1f}" if lf > 0 else "0")
-except:
-    print("0")
-PYEOF
-)
-      ;;
-
-    *)
-      echo "[Pre-push] ℹ️  [$SPATH] 알 수 없는 스택 타입: $STYPE — 건너뜀"
-      popd >/dev/null; return 0
-      ;;
-  esac
-
-  popd >/dev/null
-
-  echo "[Pre-push] [$SPATH] 라인 커버리지: ${COVERAGE}%"
-
-  python3 -c "
-import sys
-try:
-    sys.exit(0 if float('${COVERAGE}') >= ${THRESHOLD} else 1)
-except:
-    sys.exit(1)
-" 2>/dev/null
-  RET=$?
-
-  if [ $RET -eq 0 ]; then
-    echo "[Pre-push] ✅ [$SPATH] 통과"
-  else
-    echo "[Pre-push] ❌ [$SPATH] 커버리지 ${COVERAGE}% < ${THRESHOLD}%"
-  fi
-  return $RET
+# ② 테스트 + 커버리지 리포트 생성
+test_stack() { # test_stack TYPE PATH — 0 = 테스트 통과(리포트 생성), 1 = 실패, 3 = 해당 없음
+  local t="$1" p="$2"
+  [ -d "$p" ] || return 3
+  (
+    cd "$p" || exit 3
+    case "$t" in
+      kotlin|kotlin-multi)
+        [ -f ./gradlew ] || exit 3
+        echo "[Pre-push] [$p] ./gradlew test jacocoTestReport"
+        run 30 ./gradlew test jacocoTestReport --daemon -q ;;
+      go|go-multi)
+        command -v go &>/dev/null || exit 3
+        if [ -f go.work ]; then
+          R=0
+          for m in $(go list -m -f '{{.Dir}}' 2>/dev/null); do
+            echo "[Pre-push] [$p] go test (${m#$PWD/})"
+            (cd "$m" && run 20 go test -coverprofile=coverage.out ./...) || R=1
+          done
+          exit $R
+        fi
+        [ -f go.mod ] || exit 3
+        echo "[Pre-push] [$p] go test -coverprofile"
+        run 30 go test -coverprofile=coverage.out ./... ;;
+      python|python-multi)
+        [ -f pyproject.toml ] && command -v uv &>/dev/null || { echo "[Pre-push] [$p] uv 없음 — 건너뜀"; exit 3; }
+        echo "[Pre-push] [$p] uv run pytest --cov"
+        run 30 uv run pytest --cov --cov-report=xml -q ;;
+      nextjs|nextjs-multi)
+        [ -f package.json ] || exit 3
+        JEST="--coverage --coverageReporters=json-summary --passWithNoTests"
+        if ls jest.config.* &>/dev/null || grep -q '"jest"' package.json; then
+          echo "[Pre-push] [$p] jest --coverage"
+          # shellcheck disable=SC2086
+          run 30 npx jest $JEST
+        else
+          R=0; FOUND=0
+          for d in apps/*/ packages/*/; do
+            [ -f "$d/package.json" ] || continue
+            ls "$d"jest.config.* &>/dev/null || continue
+            FOUND=1; echo "[Pre-push] [$p/${d%/}] jest --coverage"
+            # shellcheck disable=SC2086
+            (cd "$d" && run 20 npx jest $JEST) || R=1
+          done
+          [ "$FOUND" -eq 1 ] || exit 3
+          exit $R
+        fi ;;
+      flutter|flutter-multi)
+        command -v flutter &>/dev/null || { echo "[Pre-push] [$p] flutter 없음 — 건너뜀"; exit 3; }
+        if [ -f pubspec.yaml ] && [ -d test ]; then
+          echo "[Pre-push] [$p] flutter test --coverage"
+          run 30 flutter test --coverage
+        else
+          R=0; FOUND=0
+          while IFS= read -r ps; do
+            d=$(dirname "$ps"); [ -d "$d/test" ] || continue
+            FOUND=1; echo "[Pre-push] [$p/${d#./}] flutter test --coverage"
+            (cd "$d" && run 20 flutter test --coverage) || R=1
+          done < <(find . -name pubspec.yaml -not -path '*/.dart_tool/*' -not -path '*/build/*' 2>/dev/null)
+          [ "$FOUND" -eq 1 ] || exit 3
+          exit $R
+        fi ;;
+      *) exit 3 ;;
+    esac
+  )
 }
 
-# ─────────────────────────────────────────────────────────────
-# 모드 분기
-# ─────────────────────────────────────────────────────────────
 FAILED=0
-
-if [ -f .claude/stacks.json ] && command -v jq >/dev/null 2>&1; then
-  # 모노레포 모드 — 각 스택 순차 검증
-  MODE=$(jq -r '.mode // "single"' .claude/stacks.json)
-  if [ "$MODE" = "monorepo" ]; then
-    echo "[Pre-push] 모노레포 모드 — $(jq '.stacks | length' .claude/stacks.json) 개 스택 검증"
-    echo ""
-    while IFS= read -r line; do
-      SPATH=$(echo "$line" | jq -r '.path')
-      STYPE=$(echo "$line" | jq -r '.type')
-      echo "─── [$SPATH] ($STYPE) ───"
-      if ! check_stack_coverage "$SPATH" "$STYPE"; then
-        FAILED=1
-      fi
-      echo ""
-    done < <(jq -c '.stacks[]' .claude/stacks.json)
-  else
-    # stacks.json 이 있지만 mode != monorepo → 단일 스택 정보로 실행
-    SPATH=$(jq -r '.stacks[0].path // "."' .claude/stacks.json)
-    STYPE=$(jq -r '.stacks[0].type // "auto"' .claude/stacks.json)
-    check_stack_coverage "$SPATH" "$STYPE" || FAILED=1
-  fi
-else
-  # 단일 스택 모드 — 루트에서 자동 감지
-  check_stack_coverage "." "auto" || FAILED=1
-fi
+while IFS=$'\t' read -r T P; do
+  [ -z "$T" ] && continue
+  echo "─── [$P] ($T) ───"
+  T0=$(date +%s)
+  test_stack "$T" "$P"; R=$?
+  timing_log "pre-push:$P" "$T0" "$R"
+  case "$R" in
+    3) echo "[Pre-push] ℹ️  [$P] 테스트 도구·대상 없음 — 건너뜀"; continue ;;
+    0) ;;
+    *) echo "[Pre-push] ❌ [$P] 테스트 실패"; FAILED=1; continue ;;
+  esac
+  if have_stacks; then coverage_gate check --stack "$T:$P" || FAILED=1
+  else coverage_gate check --stack "$T:$P" --threshold "$THRESHOLD" || FAILED=1; fi
+done <<< "$TARGETS"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if [ $FAILED -eq 0 ]; then
-  echo "[Pre-push] ✅ 모든 스택 통과 — 푸시 진행합니다"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ "$FAILED" -eq 0 ]; then
+  echo "[Pre-push] ✅ 모든 스택 통과 — 푸시 진행"
+  if [ "$MODE" = git ] && [ -n "$PUSH_SHAS" ]; then
+    for SHA in $PUSH_SHAS; do echo "$SHA"; done >>"$PASS_FILE" 2>/dev/null
+    tail -50 "$PASS_FILE" >"$PASS_FILE.tmp" 2>/dev/null && mv "$PASS_FILE.tmp" "$PASS_FILE"
+  fi
   exit 0
-else
-  echo "[Pre-push] ❌ 커버리지 미달 — 푸시 차단"
-  echo ""
-  echo "  테스트를 추가하세요:"
-  echo "    /test <파일경로>    # 테스트 자동 생성"
-  echo ""
-  echo "  추가 후 git push 재시도 시 재검사합니다."
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 1
 fi
+echo "[Pre-push] ❌ 테스트 실패 또는 커버리지 미달 — 푸시 차단"
+echo "  → 테스트 추가: /test <파일경로>   ·  긴급 우회: git push --no-verify"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fail_exit

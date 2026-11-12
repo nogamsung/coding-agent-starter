@@ -9,9 +9,9 @@
 ## 맥락 (꼭 읽을 것)
 
 - PRD 본문: `../[feature].md`
-- 이 역할의 CLAUDE.md: `[stack-path]/CLAUDE.md` — 아키텍처 규칙, 패키지 구조, 금지사항
+- 이 역할의 AGENTS.md: `[stack-path]/AGENTS.md` — 아키텍처 규칙, 패키지 구조, 금지사항
 - 모노레포 매니페스트: `.claude/stacks.json`
-- 관련 패턴 스킬: `.claude/skills/[stack-type]-patterns.md`
+- 관련 패턴 스킬: `.agents/skills/[stack-type]-patterns.md`
 
 ## 이 역할의 책임 범위
 
@@ -55,9 +55,9 @@ PRD 전체 중 **[role]** 이 담당하는 것만 여기에 실행합니다.
 - [ ] 통합/위젯 테스트 (Controller/Handler/Widget)
 - [ ] 커버리지 90% 이상 (pre-push 게이트)
 
-## 구현 제약 (해당 스택 CLAUDE.md 와 충돌하지 않을 것)
+## 구현 제약 (해당 스택 AGENTS.md 와 충돌하지 않을 것)
 
-이 역할의 `CLAUDE.md` 에 정의된 **반드시 지켜야 할 규칙**, **절대 하면 안 되는 것** 을 우선합니다. 이 프롬프트는 그 제약 안에서 동작해야 합니다.
+이 역할의 `AGENTS.md` 에 정의된 **반드시 지켜야 할 규칙**, **절대 하면 안 되는 것** 을 우선합니다. 이 프롬프트는 그 제약 안에서 동작해야 합니다.
 
 ## 다른 역할과의 계약 (Interface)
 
@@ -71,7 +71,7 @@ PRD 전체 중 **[role]** 이 담당하는 것만 여기에 실행합니다.
 
 이 프롬프트를 받은 agent 는 아래 순서로 진행합니다:
 
-1. `[stack-path]/CLAUDE.md` 를 먼저 읽어 스택별 규칙 숙지
+1. `[stack-path]/AGENTS.md` 를 먼저 읽어 스택별 규칙 숙지
 2. 관련 기존 코드(엔티티·레이어·테스트 패턴) 탐색 — 있으면 패턴 재사용
 3. 위 체크리스트의 **필요한 항목만** 생성 (예: Migration 불필요하면 스킵)
 4. 파일 생성 순서: Migration → Domain → Repository → Service → Controller → Tests
@@ -86,7 +86,7 @@ PRD 전체 중 **[role]** 이 담당하는 것만 여기에 실행합니다.
 - 모든 체크리스트 항목 체크됨
 - `[stack-path]` 에서 테스트 전체 통과
 - 커버리지 90% 이상
-- 이 역할의 CLAUDE.md 가 명시한 금지사항 위반 없음
+- 이 역할의 AGENTS.md 가 명시한 금지사항 위반 없음
 
 ---
 

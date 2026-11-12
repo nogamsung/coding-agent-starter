@@ -1,15 +1,16 @@
 <div align="center">
 
-# Claude Code Starter
+# Coding Agent Starter
 
-**Set up a Claude Code harness for a new project in 10 seconds**
+**Set up a Claude Code · Codex harness in 10 seconds — use both, or just one**
 
 [**🇰🇷 한국어**](README.md) · [**🇬🇧 English**](README.en.md)
 
 <br/>
 
 [![Claude](https://img.shields.io/badge/Claude-Code-FF6B35?logo=anthropic&logoColor=white)](https://claude.ai/code)
-[![Version](https://img.shields.io/badge/version-1.41.0-blue)](CHANGELOG.md)
+[![Codex](https://img.shields.io/badge/OpenAI-Codex-412991?logo=openai&logoColor=white)](https://developers.openai.com/codex)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 <br/>
@@ -26,36 +27,41 @@
 
 ## Overview
 
-A starter that pre-configures **commands, agents, and templates** so you can immediately leverage Claude Code in a project.
+A starter that pre-configures **skills, agents, hooks, and templates** so you can immediately use coding agents (Claude Code · Codex) in a project. (formerly `claude-code-starter`)
+
+- **Shared by Claude Code and Codex** — one instruction file `AGENTS.md`, one skill set `.agents/skills/`, one hook set `.claude/hooks/`. Install with `--platform claude|codex|both`
+- **Agent-agnostic gates** — git hooks (`.claude/githooks`) enforce build → test → coverage before push, gitleaks secret scanning and hub-checkout commit blocking from Claude, Codex, or a plain terminal. CI re-checks with the same scripts
+- **Worktree-first + safety guards** — the main checkout is a hub (source edits blocked), deleting dev/main and force pushes are blocked, deleting finished work branches needs no prompt
+- **Cross review** — `/pr` asks the *other* platform's model to review (Claude's work → Codex, and vice versa). `/handoff` passes work between agents
 
 - One-shot `/init` configures the harness for the detected stack
 - Specialized stack-specific subagents split generation, modification, and testing
 - **Dispatcher commands** — `/new`, `/plan`, `/review` consolidate all create / plan / review workflows
-- A `/rule` feedback loop accumulates rules into `CLAUDE.md` whenever the AI slips, sharpening the harness over time
+- A `/rule` feedback loop accumulates rules into `AGENTS.md` whenever the AI slips, sharpening the harness over time
 - `memory/MEMORY.md` is auto-loaded at session start — past decisions and lessons are always in context
 - **Parallel work via Git Worktrees** — `/new worktree` lets you develop multiple features simultaneously
 - **Multi-module support** — Gradle multi-module / Turborepo / Go Workspace
 - **DB design automation** — `/plan db` produces MySQL schema → Flyway / golang-migrate SQL
 - **API design automation** — `/plan api` produces REST API design → OpenAPI 3.0 YAML → code generation
-- **Monorepo mode** — auto-detects `backend/` + `frontend/` + `mobile/` cohabitation → role-specific CLAUDE.md + path guard hooks
+- **Monorepo mode** — auto-detects `backend/` + `frontend/` + `mobile/` cohabitation → role-specific AGENTS.md + path guard hooks
 - **`/start` single entry point** — start a new feature in one shot: worktree + PRD + role-specific prompts + auto-implementation. Single stack runs without confirmation, monorepo asks once.
 - **Planner agent** — `/plan` (or `/start`) turns a request into PRD + role-specific implementation prompts. Optional Agent Teams for parallel implementation.
 - **`/commit` → `/pr` → `/merge` chain** — each step proposes the next (executes upon acceptance). Not full automation but a "continuous confirmation" chain.
 
 **Supported stacks:** Kotlin Spring Boot · Next.js · Flutter · Go Gin · Python FastAPI
 
-> **v1.6.0 Breaking Change** — commands reduced from 16 to 11. See the [migration guide](#v160-migration).
+> **v2.0.0 Breaking Change** — `CLAUDE.md` → `AGENTS.md`, commands → `.agents/skills/`. See the [v2 migration guide](#v2-migration-v1x--v200).
 
 ---
 
 ## Quick start
 
-### 1. Install the `.claude` folder (new or existing project)
+### 1. Install the harness (new or existing project)
 
 **Option A — Bootstrap script (recommended)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash
 ```
 
 - If `.claude/` does **not exist** → install mode — fresh install
@@ -64,40 +70,29 @@ curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/
 **Options (pass arguments through curl | bash):**
 
 ```bash
-# Pin a specific version
-curl -fsSL ...bootstrap.sh | bash -s -- --version v1.18.0
-
-# Wipe custom assets too (legacy behavior)
-curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve
+curl -fsSL ...bootstrap.sh | bash -s -- --platform codex      # claude | codex | both (default: auto-detect installed CLIs)
+curl -fsSL ...bootstrap.sh | bash -s -- --version v2.0.0      # pin a version
+curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve         # replace user assets too
 ```
 
-**Preserved directory convention** — these are auto-preserved on update:
-```
-.claude/agents/custom/      .claude/commands/custom/
-.claude/hooks/custom/       .claude/skills/custom/
-.claude/settings.local.json
-```
-> ⚠️ Place any user-authored agent / command / hook **strictly under** `custom/`. Anything in the root (e.g. `agents/foo.md`) is overwritten on update. The `memory/` folder is never touched.
+| Platform | Installs |
+|----------|----------|
+| common | `.agents/skills/` (skill source) · `.claude/{agents,hooks,githooks,scripts,templates}` |
+| `claude` | `.claude/settings.json` · `.claude/skills → ../.agents/skills` |
+| `codex` | `.codex/{config.toml,hooks.json,rules/,agents/}` (agents generated from `.claude/agents`) |
 
-**Option B — Manual copy**
+Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not ship), `.claude/{agents,commands,hooks}/custom/`, `.claude/settings.local.json`, `.codex/config.toml`, your `.codex/rules/*`, `memory/`, `AGENTS.md`.
 
-```bash
-git clone --depth=1 https://github.com/nogamsung/claude-code-starter.git
-rm -rf /path/to/your-project/.claude
-cp -r claude-code-starter/.claude /path/to/your-project/
-rm -rf claude-code-starter
-```
-
-**Option C — Plugin marketplace** (experimental, v1.28.0+)
+**Option B — Plugin marketplace** (Claude only, experimental)
 
 ```
-/plugin marketplace add nogamsung/claude-code-starter
-/plugin install claude-code-starter@claude-code-starter
+/plugin marketplace add nogamsung/coding-agent-starter
+/plugin install coding-agent-starter@coding-agent-starter
 ```
 
 > ⚠️ **Limitation**: the plugin path installs only `commands` · `agents` · `skills`. `hooks` · `templates` · `settings.json` · `memory/` are outside the plugin system, so **`bootstrap.sh` remains the primary entry point**. Use the plugin path when you only want a subset of assets.
 
-**Option D — Update / rollback inside Claude Code** (already-installed projects)
+**Option C — Update / rollback from inside the agent** (already-installed projects; in Codex use `$starter`)
 
 ```
 /starter check                      # Show current · latest · previous version
@@ -115,7 +110,7 @@ rm -rf claude-code-starter
 
 > `/starter` does all-or-nothing updates; `/upgrade` updates partially by category (`agents` / `commands` / `skills` / `templates` / `hooks` / `settings`). Both preserve `custom/` + `settings.local.json`. `/release` is for maintainers cutting a new version of their own project (or the starter itself).
 
-### 2. Initialize a stack inside Claude Code
+### 2. Initialize a stack (Claude Code or Codex)
 
 ```
 /init                # Auto-detect
@@ -143,7 +138,7 @@ rm -rf claude-code-starter
 
 1. Auto-detect stack (when no argument given)
 2. Remove agents/templates/skills unrelated to the chosen stack (commands stay — dispatchers branch internally)
-3. Install `CLAUDE.md` — architecture rules, conventions
+3. Install `AGENTS.md` — architecture rules, conventions
 4. Install `.claude/settings.json` — stack-specific allowed commands + auto lint/test hooks
 5. Initialize `memory/MEMORY.md` — record after a project info interview
 6. Create the `dev` branch + register `.worktrees/` in gitignore
@@ -187,7 +182,7 @@ rm -rf claude-code-starter
 /new User                         # Single-resource scaffolding (stack auto-detected)
 /test <file>                      # Auto-generate tests
 /review staged                    # Standalone review
-/rule <slip description>          # Register an AI slip as a CLAUDE.md rule
+/rule <slip description>          # Register an AI slip as a AGENTS.md rule
 /memory add <content>             # Manually record decisions/lessons (lookups auto-load)
 ```
 
@@ -211,7 +206,9 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 
 ---
 
-## Commands
+## Skills (formerly commands)
+
+> v2.0.0 — commands moved to `.agents/skills/<name>/SKILL.md`. Call them as `/name` in Claude Code and `$name` in Codex. New: `/handoff`.
 
 > v1.18.0 — `/planner` was absorbed into `/plan` and a new single entry point `/start` was added.
 > v1.20.0~1.21.0 — `/upgrade` (selective diff) and `/release` (SemVer + CHANGELOG sync) added.
@@ -246,7 +243,7 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 | `/commit [hint]` | Conventional Commits + auto `/pr` suggestion (feature branches) |
 | `/pr` | Create PR + auto `/merge` suggestion |
 | `/merge [auto]` | GitHub merge + main sync + version tag + worktree cleanup |
-| `/rule <description>` | Register an AI slip as a CLAUDE.md rule |
+| `/rule <description>` | Register an AI slip as a AGENTS.md rule |
 | `/memory [add\|search]` | Second Brain entry/search (full content auto-loads) |
 | `/marketing [category task\|natural language]` | Marketing router — branches 35 `marketing-skills:*` skills into 6 categories |
 | `/starter [check\|update\|rollback]` | Check / install / rollback the starter |
@@ -318,84 +315,62 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 
 ## Auto hooks
 
-After `/init`, the installed `settings.json` includes stack-specific automatic checks.
+One set of hook scripts in `.claude/hooks/` — Claude calls them from `settings.json`, Codex from `.codex/hooks.json`. Every hook exits silently without `.claude/stacks.json`; options live in its `harness` block.
 
-| Event | Kotlin | Next.js | Flutter | Go | Python |
-|-------|--------|---------|---------|-----|--------|
-| After file save | `ktlint` | `eslint` | `dart analyze` | `go vet` | `ruff check` |
-| Before task end | `gradlew test` | `tsc` + `jest` | `flutter test` | `go test ./...` | `ruff` + `mypy` |
-| **Before git push** | **Jacoco ≥ 90%** | **Jest ≥ 90%** | **Flutter ≥ 90%** | **Go ≥ 90%** | **pytest-cov ≥ 90%** |
+| Hook | Event | What it does | Option (default) |
+|------|-------|--------------|------------------|
+| `session-start.sh` | session start | git/stack summary · pending `/handoff` note | — |
+| `safety-guard.sh` | before Bash | blocks force push, dev/main deletion, `rm -rf /`, DROP; allows finished-branch deletion without prompt | always |
+| `worktree-guard.sh` | before edit | blocks source edits in the main checkout (hub) | `worktreeGuard` (true) |
+| `post-edit-lint.sh` | after edit | per-extension lint · AGENTS.md 300-line cap | — |
+| `stop-tests.sh` | turn end (Claude) | tests changed stacks only, skips if unchanged, never blocks | `stopTests` (true) |
+| `pre-push.sh` + `build-gate.sh` | git push | build → scoped tests → coverage (`coverage-gate.py`, same as CI) | `buildGate` (true) · `coverage` (90) |
+| `memory-sync.sh` | session start/end | repo `memory/` as the source of truth, linked & committed | `memorySync` (off) |
+| `model-router.sh` | subagent spawn | picks a model tier by task difficulty (TypeSafe key) | `modelRouter` (off) |
+| `codex-adapter.sh` | Codex only | turns `apply_patch` into per-file inputs for the hooks above | — |
 
-The session-start hook also displays active plugins and a 300-line cap warning for `CLAUDE.md` is enforced via `post-edit-lint.sh`.
+Git hooks: `bash .claude/scripts/setup-git-hooks.sh` (`core.hooksPath=.claude/githooks`).
 
 ---
 
-## v1.6.0 migration
+## v2 migration (v1.x → v2.0.0)
 
-v1.6.0 consolidated 16 commands into 10. Old command names **no longer work**. Re-install via `/starter update` or by re-running `bootstrap.sh`.
+```bash
+curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash   # or /starter update
+bash .claude/scripts/migrate-agents-md.sh --apply    # CLAUDE.md → AGENTS.md (root + role dirs)
+/init                                                # writes .claude/stacks.json (v2 hooks need it)
+```
 
-### Old → New mapping
+| v1 | v2 |
+|----|----|
+| `CLAUDE.md` · `templates/CLAUDE.{stack}.md` | `AGENTS.md` · `templates/AGENTS.{stack}.md` — if a CLAUDE.md remains, Claude Code ignores AGENTS.md |
+| `.claude/commands/*.md` | `.agents/skills/<name>/SKILL.md` (same names: `/commit`, `/pr`, …; `$commit` in Codex) |
+| `.claude/skills/*.md` | `.agents/skills/<name>/SKILL.md` · `.claude/skills` is a symlink |
+| `.claude/skills/custom/*.md` | migrated automatically on update |
+| no stacks.json for single stack | `.claude/stacks.json` in every mode (+ `harness` options) |
 
-| Old (v1.5.x) | New (v1.6.0+) |
-|--------------|---------------|
-| `/new-api <Resource>` | `/new api <Resource>` |
-| `/new-component <Name>` | `/new component <Name>` |
-| `/new-screen <Name>` | `/new screen <Name>` |
-| `/new-module <Name>` | `/new module <Name>` |
-| `/new-workflow <Purpose>` | `/new workflow <Purpose>` |
-| `/new-feature <type-name>` | `/new worktree <type-name>` |
-| `/new-feature pr` | `/pr` + `/merge` (PR creation and merge cleanup are now separate) |
-| `/design-api <Resource>` | `/plan api <Resource>` |
-| `/design-db <domain>` | `/plan db <domain>` |
-| `/review-api [target]` | `/review api [target]` |
-| `/improve <description>` | `/rule <description>` |
-
-### Unchanged commands
-
-`/init`, `/plan`, `/test`, `/commit`, `/memory`, `/review [file\|staged\|diff]` — names unchanged.
-
-### Newer additions
-
-- v1.6.0 — `/starter`, `/pr`, `/merge`
-- v1.18.0 — `/start` (single entry point) and `/planner` absorbed into `/plan`
-- v1.20.0 — `/upgrade` (selective diff)
-- v1.21.0 — `/release` (SemVer automation)
+Claude Code ≥ 2.1.277 reads AGENTS.md.
 
 ---
 
 ## Directory structure
 
 ```
-claude-code-starter/
-├── .github/
-│   ├── assets/                    # README images (deleted on init)
-│   └── workflows/
-│       ├── auto-tag.yml           # Auto-tag on VERSION change
-│       └── install-matrix.yml     # 7-job install/update/preserve/pin/rollback CI
+coding-agent-starter/
+├── AGENTS.md                      # this repo's instructions (Claude · Codex)
+├── .agents/skills/<name>/SKILL.md # skill source — workflow skills + pattern skills
 ├── .claude/
-│   ├── agents/                    # Specialized subagent definitions
-│   ├── commands/                  # Slash commands (15 — incl. /upgrade, /release)
-│   ├── skills/                    # Code/pattern references (read by agents)
-│   │   ├── {kotlin,go,python,nextjs,flutter}-patterns.md
-│   │   ├── api-design-patterns.md · db-patterns.md
-│   │   ├── github-actions-patterns.md · ui-design-impl.md
-│   │   ├── security-patterns.md · docker-patterns.md · cache-patterns.md
-│   │   ├── observability-patterns.md      # logging · OTel · SLO (cross-stack)
-│   │   ├── ai-patterns.md · ai-eval-patterns.md  # LLM dev + golden/judge regression
-│   │   ├── terraform-patterns.md · kubernetes-patterns.md · helm-patterns.md
-│   │   └── mcp-presets.md                 # Recommended mcpServers per stack
-│   ├── templates/                 # Per-stack install templates (incl. CLAUDE.infra.md)
-│   ├── .starter-version           # Installed starter version (team-shared)
-│   ├── .starter-version-prev      # Previous version (rollback metadata)
-│   └── hooks/
-│       ├── session-start.sh       # Session start — git/stack/plugins summary
-│       ├── safety-guard.sh        # PreToolUse — block risky commands on protected branches
-│       ├── post-edit-lint.sh      # PostToolUse — file-extension-based lint + CLAUDE.md 300-line guard
-│       └── pre-push.sh            # Coverage gate (all active stacks)
-├── memory/
-│   └── MEMORY.md                  # This repo's Second Brain
-├── docs/                          # Feature specs + GTM (auto-generated as needed)
-├── bootstrap.sh                   # Install/update script (--version, --no-preserve)
+│   ├── agents/                    # subagent source
+│   ├── skills -> ../.agents/skills
+│   ├── hooks/                     # shared hooks (lib.sh · guards · pre-push · build-gate · stop-tests · memory-sync · …)
+│   ├── githooks/                  # pre-commit · pre-push (core.hooksPath)
+│   ├── scripts/                   # init-cleanup · gen-codex-agents · coverage-gate · cross-review · setup-git-hooks · tests/
+│   ├── templates/                 # AGENTS.{stack}.md · settings.{stack}.json · cicd/ · gitleaks.toml · optional-skills.json
+│   └── .starter-{version,platform,skills}
+├── .codex/                        # config.toml · hooks.json · rules/ · agents/*.toml (generated)
+├── .github/workflows/             # auto-tag · install-matrix · harness-ci
+├── memory/MEMORY.md               # this repo's Second Brain
+├── bootstrap.sh                   # install/update (--platform · --version · --no-preserve)
 ├── CHANGELOG.md
 └── VERSION
 ```

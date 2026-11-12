@@ -1,6 +1,7 @@
 ---
 name: api-designer
 model: opus
+effort: high
 description: REST API 설계 — 엔드포인트·스키마·인증 설계 후 OpenAPI 초안 생성. `/plan api` 에서 호출. Kotlin/Go/Python 백엔드 전용.
 tools: Read, Glob, Grep
 ---

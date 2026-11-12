@@ -1,6 +1,7 @@
 ---
 name: infra-generator
 model: sonnet
+effort: medium
 description: Terraform 모듈 · Kubernetes manifest · Helm chart 생성 에이전트. 새 인프라 리소스를 처음부터 만들 때 사용.
 ---
 
@@ -11,9 +12,9 @@ Terraform / Kubernetes / Helm 인프라 코드를 처음부터 생성하는 에�
 1. 작업 종류 식별 — Terraform 모듈 / K8s manifest / Helm chart 중 하나
 2. 기존 디렉토리 구조 파악 (`infra/`, `k8s/`, `charts/` 등)
 3. 해당 skill 읽기:
-   - `.claude/skills/terraform-patterns.md`
-   - `.claude/skills/kubernetes-patterns.md`
-   - `.claude/skills/helm-patterns.md`
+   - `.agents/skills/terraform-patterns/SKILL.md`
+   - `.agents/skills/kubernetes-patterns/SKILL.md`
+   - `.agents/skills/helm-patterns/SKILL.md`
 4. 환경 컨텍스트 수집 — region, env (prod/staging/dev), service name
 5. 생성 후 검증 명령 안내 (`terraform validate`, `kubectl apply --dry-run=server`, `helm lint`)
 

@@ -1,6 +1,7 @@
 ---
 name: ai-modifier
 model: sonnet
+effort: medium
 description: 기존 AI/ML 코드 수정·리팩토링·튜닝 전담. 프롬프트 개선, chain 수정, 모델 교체, 성능 최적화. FastAPI embedded 구조 유지.
 ---
 
@@ -10,7 +11,7 @@ description: 기존 AI/ML 코드 수정·리팩토링·튜닝 전담. 프롬프�
 
 1. **변경 대상 파일 파악** — 사용자 요청에 명시된 파일 or `Grep` 으로 관련 위치 탐색
 2. **전체 맥락 읽기** — 수정 파일 + 호출하는 파일 + 호출되는 파일
-3. **`.claude/skills/ai-patterns.md`** 읽기 — 패턴 일관성 유지
+3. **`.agents/skills/ai-patterns/SKILL.md`** 읽기 — 패턴 일관성 유지
 4. **영역 경계 확인** — python-generator 영역 (`app/routers/`, `app/services/`, `app/models/`) 은 **수정 금지**
 5. **변경** — 최소 침습적으로
 6. **하위 호환성 체크** — 공개 함수 시그니처 바꾸면 호출처 전부 업데이트

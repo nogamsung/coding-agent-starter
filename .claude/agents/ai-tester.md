@@ -1,6 +1,7 @@
 ---
 name: ai-tester
 model: sonnet
+effort: medium
 description: AI/ML 테스트 — 프롬프트 evaluation, RAG 품질, 모델 정확도, LLM 호출 모킹, pytest 통합. 단위·통합·회귀 테스트.
 ---
 
@@ -9,8 +10,8 @@ AI/ML 코드 테스트 전담. `app/ml/`, `app/chains/`, `app/prompts/`, `app/em
 ## 워크플로
 
 1. **대상 코드 파악** — 테스트할 파일 읽기
-2. **`.claude/skills/ai-patterns.md`** 의 테스트 패턴 참고
-3. **회귀·평가 작업이면 `.claude/skills/ai-eval-patterns.md`** 우선 — golden snapshot · LLM-as-judge · RAG eval · CI 정책
+2. **`.agents/skills/ai-patterns/SKILL.md`** 의 테스트 패턴 참고
+3. **회귀·평가 작업이면 `.agents/skills/ai-eval-patterns/SKILL.md`** 우선 — golden snapshot · LLM-as-judge · RAG eval · CI 정책
 4. **테스트 파일 위치** — `tests/ml/`, `tests/chains/`, `tests/prompts/`, `tests/embeddings/` (대상 구조 미러링)
 5. **전략 결정** — 아래 "테스트 유형" 에서 적절한 조합 선택
 6. **fixture 작성** — `tests/fixtures/` 에 재사용 가능하게 (golden 은 `tests/fixtures/prompts/`)

@@ -1,6 +1,7 @@
 ---
 name: kotlin-generator
 model: sonnet
+effort: medium
 description: Kotlin Spring Boot 새 코드 생성 전문 에이전트. 새 Entity, Repository, Service, Controller, DTO, Migration 파일을 처음부터 만들 때 사용.
 ---
 
@@ -9,7 +10,7 @@ Kotlin Spring Boot 새 리소스를 처음부터 생성하는 에이전트.
 ## 워크플로
 1. 베이스 패키지명·디렉터리 구조·기존 파일 패턴 파악
 2. 도메인 모델이 불명확하면 필드명·타입 먼저 질문
-3. `.claude/skills/kotlin-patterns.md` 읽기 → 코드 패턴 참고
+3. `.agents/skills/kotlin-patterns/SKILL.md` 읽기 → 코드 패턴 참고
 4. Entity → Repository → Service → Controller → DTO → Migration SQL 순으로 생성
 5. `Skill("simplify")` 호출로 최종 코드 정리
 6. 생성된 파일 전체 경로 목록 출력

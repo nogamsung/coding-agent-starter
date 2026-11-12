@@ -1,0 +1,24 @@
+{
+  "$comment": "스타터가 기본 배포하지 않는 서드파티 skill 목록. 저장소에 벤더링하지 않고 /upgrade optional <name> 이 upstream 의 고정 ref 에서 받아 .agents/skills/<name>/ 에 설치한다. ref 를 올릴 때는 upstream 변경·라이선스를 확인한다.",
+  "skills": [
+    {
+      "name": "archify",
+      "description": "아키텍처·워크플로·시퀀스·데이터 흐름·상태 다이어그램을 인라인 SVG 단독 HTML 로 생성 (Mermaid 입력 지원, PNG/SVG 내보내기)",
+      "repository": "https://github.com/tt-a1i/archify",
+      "ref": "v3.2.0",
+      "path": "archify",
+      "license": "Apache-2.0 (일부 MIT — upstream LICENSE·LICENSE-MIT·NOTICE 참고)",
+      "size_note": "수 MB (renderers·assets 포함) — 필요한 프로젝트에만",
+      "requires": ["node >= 18 (내보내기·검증 스크립트)"],
+      "stacks": ["any"]
+    }
+  ],
+  "install": [
+    "TMP=$(mktemp -d)",
+    "git clone --quiet --depth=1 --branch \"$REF\" \"$REPOSITORY\" \"$TMP/src\"",
+    "test -f \"$TMP/src/$SKILL_PATH/SKILL.md\"",
+    "rm -rf \".agents/skills/$NAME\" && cp -R \"$TMP/src/$SKILL_PATH\" \".agents/skills/$NAME\"",
+    "printf '%s %s\\n' \"$REPOSITORY\" \"$REF\" > \".agents/skills/$NAME/.optional-source\"",
+    "rm -rf \"$TMP\""
+  ]
+}

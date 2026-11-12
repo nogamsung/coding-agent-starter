@@ -91,3 +91,26 @@ BUMP=major bash next-version.sh                                        # → 2.0
 docker buildx imagetools inspect ghcr.io/<owner>/<repo>:latest-prd
 docker buildx imagetools inspect ghcr.io/<owner>/<repo>:latest-dev    # 같은 digest 여야 함
 ```
+
+---
+
+# 하네스·보안 CI 템플릿 (선택)
+
+로컬 git 훅(`.claude/githooks/`)이 막는 것을 CI 가 **같은 판정으로 다시** 강제한다 — `--no-verify` 로 넘겨도 PR 에서 막힌다.
+
+| 파일 | 복사 위치 | 역할 |
+|------|----------|------|
+| `secret-scan.yml` | `.github/workflows/` | PR 커밋 범위 gitleaks 스캔. 설정은 루트 `.gitleaks.toml` (`/init` 이 `templates/gitleaks.toml` 을 복사) |
+| `harness-ci.yml` | `.github/workflows/` | `.claude/`·`.agents/`·`.codex/` 변경 PR — 훅 문법, `.claude/scripts/tests` 단위 테스트, `gen-codex-agents.py --check`, skill frontmatter |
+| `ci-verified-on-dev.sh` | `.github/scripts/` | 릴리스 PR(dev → main)에서 dev push 때 이미 성공한 커밋이면 무거운 빌드·테스트를 건너뛴다 (사용법은 파일 머리말) |
+
+```bash
+mkdir -p .github/workflows .github/scripts
+cp .claude/templates/cicd/secret-scan.yml        .github/workflows/
+cp .claude/templates/cicd/harness-ci.yml         .github/workflows/
+cp .claude/templates/cicd/ci-verified-on-dev.sh  .github/scripts/ && chmod +x .github/scripts/ci-verified-on-dev.sh
+```
+
+로컬 훅 활성화(클론마다 한 번): `bash .claude/scripts/setup-git-hooks.sh` → `core.hooksPath=.claude/githooks`
+- `pre-commit`: Codex 에이전트 동기화 검사(`.codex/` 있을 때) → gitleaks(설치 시) → 허브 소스 커밋 차단(`harness.worktreeGuard`)
+- `pre-push`: `.claude/hooks/pre-push.sh --git-hook` (빌드·커버리지 게이트)
