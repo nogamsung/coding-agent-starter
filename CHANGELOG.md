@@ -12,6 +12,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-11-12
+
+### ⚠️ BREAKING — `claude-code-starter` → `coding-agent-starter`, Claude Code · Codex 공용
+
+저장소 이름 변경(GitHub 자동 리다이렉트 유지). 같은 하네스를 **Claude Code · Codex 둘 다, 또는 하나만** 써도 동작하도록 재구성.
+jelog 실사용 하네스에서 검증된 훅·게이트·워크플로를 범용(stacks.json 기반)으로 이식.
+
+#### 구조 (Breaking)
+- 지침 파일 `CLAUDE.md` → **`AGENTS.md`** (Claude Code ≥ 2.1.277 · Codex 공통). `templates/CLAUDE.{stack}.md` → `AGENTS.{stack}.md`. 이전 도구 `.claude/scripts/migrate-agents-md.sh`
+- `.claude/commands/*.md` · `.claude/skills/*.md` → **`.agents/skills/<name>/SKILL.md`** (skill 원본), `.claude/skills` 는 심볼릭 링크. 호출 이름은 동일
+- 부작용 큰 skill(`init`·`rule`·`release`·`upgrade`·`starter`·`merge`·`handoff`)은 `disable-model-invocation`
+- 모든 모드에서 `.claude/stacks.json` 생성 — 훅의 단일 진실 + `harness` 옵션 블록 (`worktreeGuard`·`stopTests`·`buildGate`·`coverage`·`gitHooks`·`memorySync`·`modelRouter`·`crossReview`·`baseBranch`)
+- `claude-md-management` 플러그인 제거 (CLAUDE.md 를 만들면 AGENTS.md 가 무시됨) — CI 가 금지
+
+#### 설치
+- `bootstrap.sh --platform claude|codex|both` (기본: CLI 자동 감지, 이후 `.claude/.starter-platform` 유지)
+- 사용자 skill 보존: 스타터가 배포하지 않은 `.agents/skills/<name>/` 는 update 시 유지 (`.claude/.starter-skills` 매니페스트로 판별). v1 `.claude/skills/custom/*.md` 자동 이전
+- `.codex/config.toml` · 사용자 `.codex/rules/*` 보존 · `STARTER_SRC=<로컬 체크아웃>` 로 clone 없이 설치 (CI 가 PR 내용을 실제로 검증)
+
+#### Codex 계층
+- `.codex/`: `config.toml` · `hooks.json` · `rules/default.rules` (execpolicy) · `agents/*.toml`
+- `gen-codex-agents.py` — `.claude/agents/*.md` 원본 → Codex agent TOML 생성 (`--check [--index]`), agent frontmatter 에 `effort:` 추가
+- `codex-adapter.sh` — `apply_patch` 를 파일별 입력으로 바꿔 Claude 훅을 그대로 재사용
+
+#### 훅 · 게이트 (우선순위 높음)
+- `worktree-guard.sh` — 메인 체크아웃(허브)에서 소스 편집 차단
+- `safety-guard.sh` 강화 + `branch-delete-guard.py` — dev/main 삭제·덮어쓰기 무조건 차단, 끝난 작업 브랜치 삭제는 무확인 허용, Codex 입력 지원
+- `stop-tests.sh` — 스택별 인라인 Stop 명령 대체: 바뀐 범위만, 지문이 같으면 skip, 턴 차단 없음
+- `build-gate.sh` + `coverage-gate.py` — push 전 빌드 → 테스트 → 커버리지. 로컬·CI 같은 판정 스크립트. 에이전트 모드 실패는 exit 2 로 실제 차단 (v1 은 exit 1 이라 막지 못했음)
+- `.claude/githooks/{pre-commit,pre-push}` + `setup-git-hooks.sh` — gitleaks 시크릿 스캔 · 허브 소스 커밋 차단 · Codex agent 동기화 검사 · push 게이트를 에이전트 무관하게
+- `templates/gitleaks.toml`, `templates/cicd/{secret-scan.yml,harness-ci.yml,ci-verified-on-dev.sh}`
+
+#### 워크플로 (우선순위 중간·낮음)
+- `/handoff` — Claude↔Codex·새 세션 인계 메모 (`<git-dir>/handoff.md`, 세션 시작 시 표시)
+- `cross-review.sh` — `/pr` 에서 반대 플랫폼 모델로 교차 리뷰 (첫 실행 때 전송 동의를 묻고 저장, CLI 없으면 skip). `/review cross`
+- `memory-sync.sh` (opt-in) — 저장소 `memory/` 를 원본으로 자동 메모리 링크·커밋
+- `dev-smoke.sh` — 변경 스택 실제 기동·헬스체크 (`stacks[].smoke` 또는 compose)
+- `model-router.sh` + `agent-router.py` + `model-tier.py` (opt-in) — 작업 난이도로 subagent 모델 티어 선택
+- `timing.sh` — 단계별 소요 시간 jsonl · `motion-patterns` skill · `/upgrade optional` (archify 등 서드파티 skill 을 upstream 에서 설치, 저장소에 벤더링하지 않음)
+- settings 템플릿 `ask` 보강 — `gh secret/variable set|delete`, `gh workflow run`, `git config core.hooksPath`
+
+#### CI
+- `harness-ci.yml` — 스크립트 단위 테스트(58) · 훅 스모크 · skill frontmatter lint · Codex agent 동기화
+- `install-matrix.yml` — 플랫폼별 설치 · 사용자 skill 보존 · v1→v2 이전 · 훅 무해성(빈 프로젝트에서 파일 생성 없음) 시나리오
+
+---
+
 ## [1.43.0] - 2026-08-16
 
 ### Changed — agent 모델 버전 고정 제거 (항상 최신 모델 사용)

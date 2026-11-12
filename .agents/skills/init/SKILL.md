@@ -7,6 +7,7 @@ disable-model-invocation: true
 
 프로젝트의 스택을 설정하고 하네스를 구성합니다.
 **모노레포** (backend + frontend + mobile 공존), **단일 스택**, **코드 없는 마케팅/세일즈 전담 모드** 를 지원합니다.
+Claude Code · Codex 어느 쪽에서 실행해도 같다 — 플랫폼은 `.claude/.starter-platform` (`claude|codex|both`, bootstrap 이 기록) 을 따른다.
 
 **선택한 스택:** $ARGUMENTS
 
@@ -167,15 +168,19 @@ bash .claude/scripts/init-cleanup.sh kotlin --apply
 ```
 
 **보존 (스크립트 강제)**:
-- `agents/custom/`, `commands/custom/`, `hooks/custom/`, `skills/custom/`
+- `.claude/agents/custom/`, `.claude/commands/custom/`, `.claude/hooks/custom/`
+- 워크플로 skill 전부 (`commit`·`pr`·`start`·`plan`·`new`·`review`·`handoff` 등 — 구 commands)
+- 스타터가 배포하지 않은 `.agents/skills/<name>/` (사용자 skill)
 - `settings.local.json`, `.starter-version*`
-- `commands/` 전체 (디스패처는 모든 모드에서 사용)
 
 **제거 대상** (스크립트 자동 계산):
-- 위 유지 목록에 없는 `agents/*.md`, `skills/*/SKILL.md`, `templates/*` 파일
+- 위 유지 목록에 없는 `.claude/agents/*.md`, `.agents/skills/<name>/` (패턴 skill), `.claude/templates/*` 파일
 - `.github/assets/` 디렉토리 (스타터 대표 이미지)
 
-> **커맨드는 전부 유지**합니다. `/new`, `/plan`, `/review` 는 역할 prefix 로 스택 분기를 내부 처리합니다.
+**Step 2c — Codex 서브에이전트 재생성** (플랫폼 `codex|both` 만): agent 를 지웠으므로 `.codex/agents/*.toml` 도 맞춘다.
+```bash
+[ -d .codex ] && python3 .claude/scripts/gen-codex-agents.py
+```
 
 > ⚠️ **자연어 인스트럭션으로 직접 `rm` 실행 금지** — 스크립트 사용. 14 mode 각각 deterministic 보장 + custom/ 보존 + 권한 1회 수락 (`Bash(bash .claude/scripts/*)`).
 
@@ -186,12 +191,24 @@ bash .claude/scripts/init-cleanup.sh kotlin --apply
 > 🔒 **AGENTS.md ≤ 300줄 캡 (모든 모드 공통)** — 설치/병합한 모든 AGENTS.md 의 줄 수 검사. 초과 시 상세를 `.agents/skills/{topic}/SKILL.md` 또는 `docs/{topic}.md` 로 이관, AGENTS.md 는 인덱스 한 줄. (post-edit-lint.sh 가 자동 가드)
 
 **공통 패턴 — 모든 모드**:
-1. **AGENTS.md 설치** — 신규: `cp .claude/templates/AGENTS.{mode}.md ./AGENTS.md` · 기존: "아키텍처 규칙", "MUST", "NEVER" 섹션만 병합 (덮어쓰기 전 사용자 확인). 첫 줄 `[프로젝트명]` 교체.
-2. **settings.json 설치** — 신규: `cp .claude/templates/settings.{mode}.json ./.claude/settings.json` · 기존: `hooks` + `permissions` 만 템플릿으로 업데이트, `enabledPlugins` 는 기존 유지.
+0. **CLAUDE.md 이전 확인** — `CLAUDE.md`(루트·하위) 가 있으면 Claude Code 가 AGENTS.md 를 무시한다. `bash .claude/scripts/migrate-agents-md.sh` dry-run 결과를 보여주고 확인 후 `--apply`. **CLAUDE.md 를 새로 만들지 않는다.**
+1. **AGENTS.md 설치** — 신규: `cp .claude/templates/AGENTS.{mode}.md ./AGENTS.md` · 기존: "아키텍처 규칙", "MUST", "NEVER" 섹션만 병합 (덮어쓰기 전 사용자 확인). 첫 줄 `[프로젝트명]` 교체. (Claude Code ≥ 2.1.277 · Codex 공통 지침 파일)
+2. **settings.json 설치** (플랫폼 `claude|both` 만) — 신규: `cp .claude/templates/settings.{mode}.json ./.claude/settings.json` · 기존: `hooks` + `permissions` 만 템플릿으로 업데이트, `enabledPlugins` 는 기존 유지. Codex 는 bootstrap 이 깐 `.codex/hooks.json` · `.codex/rules/` 가 같은 훅·규칙을 쓴다 (추가 작업 없음).
+3. **`.claude/stacks.json` 생성 (모든 모드)** — 훅의 단일 진실. 없으면 모든 훅이 조용히 skip 한다.
+   - 단일 스택: `{"mode":"single","stacks":[{"role":"app","type":"<stack>","path":"."}]}`
+   - infra: `{"mode":"single","stacks":[{"role":"infra","type":"infra","path":"."}]}`
+   - marketing/sales/product: `{"mode":"<mode>","stacks":[]}`
+   - 모노레포: 3-B-1
+   - 선택 `harness` 블록 (생략 시 기본값) — 사용자에게 기본값을 보여주고 바꿀 것만 묻는다:
+     ```json
+     "harness": { "worktreeGuard": true, "stopTests": true, "buildGate": true, "coverage": 90,
+                  "gitHooks": true, "memorySync": "off", "modelRouter": "off", "baseBranch": "dev" }
+     ```
+     `worktreeGuard` 메인 체크아웃 소스 편집 차단 · `stopTests` 턴 종료 시 변경 범위 테스트 · `buildGate`/`coverage` push 게이트 (coverage 0=끔) · `gitHooks` true 면 새로 clone 한 팀원 세션에서도 git 훅 자동 설정 · `memorySync` `off|link|commit` (+`memorySyncPush`) · `modelRouter` `off|log|apply` (TypeSafe 키 필요) · `crossReview` 는 쓰지 않는다 — 첫 `/pr` 에서 묻고 저장 (diff 가 반대 플랫폼 서비스로 전송되므로)
 
 ### 3-A. 단일 스택 모드 — 추가 동작 없음
 
-`.claude/stacks.json` 생성 안 함. `pre-push.sh` 가 루트 감지 폴백.
+공통 패턴 3 의 단일 스택 `stacks.json` 만 쓴다.
 
 ### 3-B. 모노레포 모드 — `.claude/stacks.json` + 역할별 AGENTS.md
 
@@ -236,7 +253,7 @@ bash .claude/scripts/init-cleanup.sh kotlin --apply
 
 ### 3-C. Marketing / Sales / Product 모드 — 코드 없음
 
-`.claude/stacks.json` 생성 안 함 (코드 빌드/테스트 의미 없음). settings 의 `pre-push.sh` · `post-edit-lint.sh` · `Stop` 훅 없음 (`safety-guard.sh` · `session-start.sh` · `usage-counter.sh` 만).
+`stacks.json` 은 `stacks: []` (코드 빌드/테스트 없음). settings 에 `pre-push.sh` · `post-edit-lint.sh` · `worktree-guard.sh` · `stop-tests.sh` 없음 (`safety-guard.sh` · `session-start.sh` · `usage-counter.sh` · `memory-sync.sh` 만).
 
 **필수 plugin 설치 안내** (Step 6 완료 메시지에 자동 포함):
 
@@ -247,15 +264,23 @@ bash .claude/scripts/init-cleanup.sh kotlin --apply
 
 ### 3-D. Infra 모드 — Terraform/K8s/Helm
 
-`.claude/stacks.json` 생성 안 함. `pre-push.sh` 의 lint 명령은 stack 무관 (terraform fmt 등).
+`stacks.json` 은 `type: "infra"` 한 개. `stop-tests.sh` 가 `terraform fmt -check` 를 돈다.
 
 ---
 
-### 3-공통. 커버리지 게이트 훅
+### 3-공통. git 훅 (Claude·Codex·터미널 공통 게이트) — 코드 모드만
 
-`.claude/hooks/pre-push.sh` 확인. `bootstrap.sh` 로 설치했으면 이미 존재. 없으면 복사. 훅은 `.claude/stacks.json` 유무로 모드를 자동 감지합니다.
+에이전트 훅은 해당 에이전트 안에서만 돈다. push 게이트(빌드 → 테스트 → 커버리지)와 커밋 검사(시크릿 스캔 · 허브 소스 커밋 차단 · Codex agent 동기화)는 git 훅으로 건다. 사용자 확인 후:
 
-> **marketing/sales 모드 예외**: `settings.{marketing,sales}.json` 에는 `pre-push.sh` 훅이 등록돼 있지 않으므로 이 단계는 **건너뜁니다** (파일만 남아 있어도 실행되지 않음).
+```bash
+bash .claude/scripts/setup-git-hooks.sh                       # core.hooksPath=.claude/githooks (+ SSH keepalive)
+[ -f .gitleaks.toml ] || cp .claude/templates/gitleaks.toml .gitleaks.toml
+```
+
+- gitleaks 미설치면 시크릿 스캔은 건너뛴다 → 안내: `brew install gitleaks` (CI 는 `templates/cicd/secret-scan.yml`)
+- 끄기: `bash .claude/scripts/setup-git-hooks.sh --off` · 1회 우회: `git commit/push --no-verify` (CI 가 같은 판정을 다시 강제하도록 `templates/cicd` 설치 권장)
+- 거절하면 `harness.gitHooks` 를 `false` 로 기록 (세션 시작 시 안내도 끔). 수락하면 `true`.
+- marketing/sales/product 모드는 건너뛴다.
 
 ### 3-공통. Second Brain 초기화
 
@@ -290,14 +315,15 @@ cp .claude/templates/memory.md ./memory/MEMORY.md
 
 ---
 
-## YYYY-MM-DD: Claude Code 하네스 구성
+## YYYY-MM-DD: 코딩 에이전트 하네스 구성
 
 **카테고리:** 참고
 
 /init [스택 또는 monorepo] 으로 하네스를 구성했습니다.
 - AGENTS.md: 아키텍처 규칙 및 코딩 컨벤션 (모노레포일 경우 루트 인덱스 + 역할별 AGENTS.md)
-- .claude/settings.json: 권한 및 훅 설정
-- .claude/stacks.json: 스택 매니페스트 (모노레포만)
+- .claude/settings.json (Claude) · .codex/ (Codex): 권한 및 훅 설정 — 훅 스크립트는 .claude/hooks/ 한 벌
+- .claude/stacks.json: 스택 매니페스트 + harness 옵션
+- .claude/githooks/: push·commit 게이트 (core.hooksPath)
 - memory/MEMORY.md: Second Brain 초기화
 
 앞으로 중요한 결정·교훈은 /memory add 로 기록하세요.
@@ -309,6 +335,7 @@ cp .claude/templates/memory.md ./memory/MEMORY.md
 
 ```bash
 grep -q "\.worktrees/" .gitignore 2>/dev/null || echo ".worktrees/" >> .gitignore
+grep -q "settings.local.json" .gitignore 2>/dev/null || echo ".claude/settings.local.json" >> .gitignore
 git add .gitignore
 git commit -m "chore: .worktrees/ gitignore 추가" 2>/dev/null || true
 ```
@@ -359,6 +386,8 @@ chmod +x .github/scripts/next-version.sh
 cp .claude/templates/cicd/Dockerfile.example  Dockerfile   # 사용자가 자기 앱에 맞게 수정
 ```
 
+추가 선택 (질문 1회로 묶어서): 시크릿 스캔 `secret-scan.yml` · 하네스 스크립트 테스트 `harness-ci.yml` · 릴리스 PR 중복 검증 생략 `ci-verified-on-dev.sh` — 각각 `.claude/templates/cicd/README.md` 의 설치 방법대로 복사.
+
 설치 후 안내: repo Settings → Actions → Workflow permissions = **Read and write** 필요.
 사이클·버전 규칙·주의사항 상세는 `.claude/templates/cicd/README.md`.
 
@@ -382,11 +411,12 @@ GitHub 브랜치 보호 안내:
 
 [5 기둥]
   1. 컨텍스트:    AGENTS.md ✅              (monorepo: + 역할별 AGENTS.md)
-  2. CI/CD 게이트: settings.json hooks ✅    (코드 모드만 lint/test, marketing/sales/product 는 safety+session)
-  3. 도구 경계:   settings.json permissions ✅
+  2. CI/CD 게이트: 에이전트 훅 + git 훅 ✅    (코드 모드만 lint/test/coverage, marketing/sales/product 는 safety+session)
+  3. 도구 경계:   settings.json permissions · .codex/rules ✅
   4. 피드백 루프: /rule ✅
   5. 팀 지식:    memory/MEMORY.md ✅
-[Git] main+dev 또는 main only · .worktrees/ gitignore 등록 · monorepo: .claude/stacks.json 매니페스트
+[Git] main+dev 또는 main only · .worktrees/ gitignore 등록 · .claude/stacks.json 매니페스트 · core.hooksPath=.claude/githooks
+[플랫폼] claude | codex | both — 같은 AGENTS.md · skill · 훅을 공유. 다른 에이전트로 넘길 땐 /handoff
 
 이제 할 일 (공통):
   1. AGENTS.md 커스터마이징

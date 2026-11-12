@@ -10,6 +10,8 @@ on:
     paths:
       - bootstrap.sh
       - .claude/**
+      - .agents/**
+      - .codex/**
       - .claude-plugin/**
       - .github/workflows/install-matrix.yml
 
@@ -24,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: All AGENTS.md ≤ 300 lines
+      - name: All AGENTS.md / CLAUDE.md ≤ 300 lines
         run: |
           set -euo pipefail
           FAIL=0
@@ -34,7 +36,7 @@ jobs:
               echo "❌ $f: $LINES > 300"
               FAIL=1
             fi
-          done < <(find . -name 'AGENTS.md' -o -name 'AGENTS.*.md' | grep -v node_modules | grep -v .worktrees)
+          done < <(find . \( -name 'AGENTS.md' -o -name 'AGENTS.*.md' -o -name 'CLAUDE.md' \) -not -path './.git/*' | grep -v node_modules | grep -v .worktrees)
           [ "$FAIL" = "0" ]
 
       - name: Stack templates — AGENTS.{stack}.md ≤ 120 lines
@@ -107,9 +109,11 @@ jobs:
       - name: settings.{stack}.json — common base (plugins / allow / deny)
         run: |
           set -euo pipefail
-          REQ_P='["claude-md-management@claude-plugins-official","commit-commands@claude-plugins-official","github@claude-plugins-official","hookify@claude-plugins-official"]'
+          REQ_P='["commit-commands@claude-plugins-official","github@claude-plugins-official","hookify@claude-plugins-official"]'
           REQ_A='["Bash(cp *)","Bash(git *)","Bash(mkdir *)","Bash(mv *)","Bash(touch *)"]'
           REQ_D='["Bash(git push --force *)","Bash(git push -f *)","Bash(rm -rf /)","Bash(rm -rf ~*)"]'
+          REQ_ASK='["Bash(gh secret set *)","Bash(gh secret delete *)","Bash(gh variable set *)","Bash(gh variable delete *)","Bash(gh workflow run *)"]'
+          FORBID_P='["claude-md-management@claude-plugins-official"]'   # CLAUDE.md 를 만들면 AGENTS.md 가 무시됨
           FAIL=0
           for f in .claude/templates/settings.*.json; do
             STACK=$(basename "$f" .json | sed 's/^settings\.//')
@@ -119,6 +123,10 @@ jobs:
             [ "$(echo "$MP" | jq 'length')" -gt 0 ] && { echo "❌ $STACK: missing plugins: $(echo $MP|jq -c .)"; FAIL=1; }
             [ "$(echo "$MA" | jq 'length')" -gt 0 ] && { echo "❌ $STACK: missing allow: $(echo $MA|jq -c .)"; FAIL=1; }
             [ "$(echo "$MD" | jq 'length')" -gt 0 ] && { echo "❌ $STACK: missing deny: $(echo $MD|jq -c .)"; FAIL=1; }
+            MK=$(jq --argjson req "$REQ_ASK" '$req - (.permissions.ask // [])' "$f")
+            [ "$(echo "$MK" | jq 'length')" -gt 0 ] && { echo "❌ $STACK: missing ask: $(echo $MK|jq -c .)"; FAIL=1; }
+            BAD=$(jq --argjson bad "$FORBID_P" '[$bad[] as $b | select((.enabledPlugins // {}) | has($b))]' "$f")
+            [ "$(echo "$BAD" | jq 'length')" -gt 0 ] && { echo "❌ $STACK: forbidden plugin: $(echo $BAD|jq -c .)"; FAIL=1; }
           done
           [ "$FAIL" = "0" ]
 
@@ -130,10 +138,10 @@ jobs:
 
           MODES="kotlin go python nextjs flutter infra marketing sales product"
           ORPHAN_S=""
-          for skill in $(ls .agents/skills/*.md 2>/dev/null | xargs -n1 basename | sed 's/\.md$//'); do
+          for skill in $(ls -d .agents/skills/*/ 2>/dev/null | xargs -n1 basename); do
             KEPT=false
             for MODE in $MODES; do
-              if ! bash .claude/scripts/init-cleanup.sh $MODE 2>&1 | grep -q "skills/$skill.md"; then
+              if ! bash .claude/scripts/init-cleanup.sh $MODE 2>&1 | grep -qE "skills/$skill\$"; then
                 KEPT=true; break
               fi
             done
@@ -177,8 +185,8 @@ jobs:
             | grep -E '\S' \
             | sort -u)
           # COMMON 변수에서도 추출
-          COMMON=$(grep -E '^KEEP_(AGENTS|SKILLS|TEMPLATES)_COMMON=' .claude/scripts/init-cleanup.sh \
-            | sed 's/^KEEP_[A-Z]*_COMMON="//' \
+          COMMON=$(grep -E '^(KEEP_(AGENTS|SKILLS|TEMPLATES)_COMMON|WORKFLOW_SKILLS)=' .claude/scripts/init-cleanup.sh \
+            | sed -E 's/^[A-Z_]+="//' \
             | sed 's/"$//' \
             | tr ' ' '\n' \
             | grep -E '\S' \
@@ -190,7 +198,7 @@ jobs:
             # keep_for_stack 의 동적 인자 (`${1}`) 는 skip — kotlin-multi/python-multi 등으로 풀려서 사용
             case "$name" in *'${1}'*) continue ;; esac
 
-            if echo "$name" | grep -qE '\.(md|json)$'; then
+            if echo "$name" | grep -qE '\.(md|json|toml)$'; then
               # template 파일
               if [ ! -f ".claude/templates/$name" ]; then
                 echo "❌ template referenced but not found: $name"
@@ -198,8 +206,8 @@ jobs:
               fi
             else
               # agent 또는 skill — 둘 중 하나에 있어야
-              if [ ! -f ".claude/agents/${name}.md" ] && [ ! -f ".agents/skills/${name}.md" ]; then
-                echo "❌ keep 이름 '$name' — agents/${name}.md 또는 skills/${name}.md 둘 다 없음 (typo 가능)"
+              if [ ! -f ".claude/agents/${name}.md" ] && [ ! -f ".agents/skills/${name}/SKILL.md" ]; then
+                echo "❌ keep 이름 '$name' — .claude/agents/${name}.md 또는 .agents/skills/${name}/SKILL.md 둘 다 없음 (typo 가능)"
                 FAIL=1
               fi
             fi
@@ -211,8 +219,8 @@ jobs:
       - name: settings.{stack}.json — required hooks contract
         run: |
           set -euo pipefail
-          REQUIRED_ALL="session-start.sh safety-guard.sh usage-counter.sh"
-          REQUIRED_CODE="pre-push.sh post-edit-lint.sh"
+          REQUIRED_ALL="session-start.sh safety-guard.sh usage-counter.sh memory-sync.sh"
+          REQUIRED_CODE="pre-push.sh post-edit-lint.sh worktree-guard.sh stop-tests.sh model-router.sh"
           NON_CODE_STACKS="marketing sales product"
           FAIL=0
           for f in .claude/templates/settings.*.json; do
@@ -241,7 +249,7 @@ jobs:
           [ "$FAIL" = "0" ]
 
   install-scenarios:
-    name: Install scenarios (fresh · preserve · pin · rollback · empty-hooks · init-cleanup)
+    name: Install scenarios (fresh · platform · preserve · v1→v2 · pin · rollback · empty-hooks · init-cleanup)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -251,42 +259,85 @@ jobs:
           set -euo pipefail
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh"
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh"
           test -d .claude
           test -f .claude/.starter-version
           test -f .claude/settings.json
           test -d .claude/agents && [ "$(ls -A .claude/agents)" ]
-          test -d .claude/commands && [ "$(ls -A .claude/commands)" ]
+          test -f .agents/skills/init/SKILL.md
+          [ "$(readlink .claude/skills)" = "../.agents/skills" ]
+          test -f .claude/skills/start/SKILL.md
           test -d .claude/hooks && [ "$(ls -A .claude/hooks)" ]
-          for h in .claude/hooks/*.sh; do bash -n "$h"; done
+          test -f .codex/hooks.json && test -d .codex/agents
+          [ "$(cat .claude/.starter-platform)" = "both" ]
+          test ! -f .claude/settings.local.json
+          for h in .claude/hooks/*.sh .claude/githooks/*; do bash -n "$h"; done
+
+      - name: Platform-specific installs (claude · codex)
+        run: |
+          set -euo pipefail
+          T1=$(mktemp -d); (cd "$T1" && STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" --platform claude > /dev/null)
+          test -L "$T1/.claude/skills" && test -f "$T1/.claude/settings.json" && test ! -d "$T1/.codex"
+          T2=$(mktemp -d); (cd "$T2" && STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" --platform codex > /dev/null)
+          test ! -e "$T2/.claude/skills" && test ! -f "$T2/.claude/settings.json" && test -f "$T2/.codex/hooks.json"
+          test -f "$T2/.agents/skills/pr/SKILL.md"
+          # 플랫폼은 기록되어 다음 update 에 유지된다
+          (cd "$T2" && STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null)
+          [ "$(cat "$T2/.claude/.starter-platform")" = "codex" ] && test ! -e "$T2/.claude/skills"
+          # codex config.toml 은 update 시 보존
+          echo '# mine' >> "$T2/.codex/config.toml"
+          (cd "$T2" && STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null)
+          grep -q '# mine' "$T2/.codex/config.toml"
 
       - name: Update preserves custom assets
         run: |
           set -euo pipefail
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh"
-          mkdir -p .claude/agents/custom .claude/commands/custom .claude/hooks/custom .claude/skills/custom
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh"
+          mkdir -p .claude/agents/custom .claude/commands/custom .claude/hooks/custom .agents/skills/my-skill
           echo "ag" > .claude/agents/custom/a.md
           echo "cm" > .claude/commands/custom/c.md
           echo "hk" > .claude/hooks/custom/h.sh
-          echo "sk" > .claude/skills/custom/s.md
+          printf -- '---\nname: my-skill\ndescription: x\n---\n' > .agents/skills/my-skill/SKILL.md
+          echo "edited" >> .agents/skills/commit/SKILL.md
           echo '{"local":1}' > .claude/settings.local.json
-          bash "$GITHUB_WORKSPACE/bootstrap.sh"
-          for f in agents/custom/a.md commands/custom/c.md hooks/custom/h.sh skills/custom/s.md settings.local.json; do
-            test -f ".claude/$f" || { echo "❌ lost: $f"; exit 1; }
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh"
+          for f in .claude/agents/custom/a.md .claude/commands/custom/c.md .claude/hooks/custom/h.sh .agents/skills/my-skill/SKILL.md .claude/settings.local.json; do
+            test -f "$f" || { echo "❌ lost: $f"; exit 1; }
           done
+          ! grep -q edited .agents/skills/commit/SKILL.md || { echo "❌ starter skill not refreshed"; exit 1; }
 
       - name: Update with --no-preserve wipes custom
         run: |
           set -euo pipefail
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh"
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh"
           mkdir -p .claude/agents/custom
           echo "x" > .claude/agents/custom/a.md
-          bash "$GITHUB_WORKSPACE/bootstrap.sh" --no-preserve
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" --no-preserve
           [ ! -f .claude/agents/custom/a.md ] || { echo "❌ --no-preserve left custom"; exit 1; }
+
+      - name: v1 → v2 update migrates custom skills
+        run: |
+          set -euo pipefail
+          V1=$(git ls-remote --tags --refs https://github.com/nogamsung/coding-agent-starter.git | awk -F/ '{print $NF}' | grep -E '^v1\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          [ -z "$V1" ] && { echo "ℹ️ no v1 tag — skip"; exit 0; }
+          TARGET=$(mktemp -d)
+          cd "$TARGET"
+          bash "$GITHUB_WORKSPACE/bootstrap.sh" --version "$V1" > /dev/null
+          test -d .claude/commands && test ! -L .claude/skills
+          mkdir -p .claude/skills/custom
+          printf '# legacy\n' > .claude/skills/custom/legacy.md
+          echo "# old" > CLAUDE.md
+          OUT=$(STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh")
+          test -f .agents/skills/legacy/SKILL.md
+          grep -q '^name: legacy' .agents/skills/legacy/SKILL.md
+          test ! -d .claude/commands
+          echo "$OUT" | grep -q migrate-agents-md
+          bash .claude/scripts/migrate-agents-md.sh --apply
+          test -f AGENTS.md && test ! -f CLAUDE.md
 
       - name: Version pin (--version)
         run: |
@@ -295,7 +346,7 @@ jobs:
           [ -z "$TAG" ] && { echo "ℹ️ no prior tag — skip"; exit 0; }
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh" --version "$TAG"
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" --version "$TAG"
           [ "$(cat .claude/.starter-version)" = "${TAG#v}" ] || { echo "❌ pin failed"; exit 1; }
 
       - name: Update writes .starter-version-prev
@@ -305,9 +356,9 @@ jobs:
           [ -z "$TAG" ] && exit 0
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh" --version "$TAG"
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" --version "$TAG"
           OLD=$(cat .claude/.starter-version)
-          bash "$GITHUB_WORKSPACE/bootstrap.sh"
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh"
           [ "$(cat .claude/.starter-version-prev)" = "$OLD" ] || { echo "❌ prev mismatch"; exit 1; }
 
       - name: Hooks fail silently on empty project (no stacks.json)
@@ -315,29 +366,39 @@ jobs:
           set -euo pipefail
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null
+          git init -q .
           bash .claude/hooks/session-start.sh > /dev/null
-          echo '{"tool_input":{"file_path":"random.py"}}' | bash .claude/hooks/post-edit-lint.sh
+          for h in post-edit-lint worktree-guard; do
+            echo '{"tool_input":{"file_path":"random.py"}}' | bash ".claude/hooks/$h.sh"
+          done
           echo '{"tool_input":{"command":"ls"}}' | bash .claude/hooks/safety-guard.sh
+          echo '{"tool_input":{"command":"git push"}}' | bash .claude/hooks/pre-push.sh
+          echo '{}' | bash .claude/hooks/stop-tests.sh
+          echo '{}' | bash .claude/hooks/memory-sync.sh commit
+          echo '{"tool_input":{"subagent_type":"planner"}}' | bash .claude/hooks/model-router.sh claude
+          echo '{"tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\n*** Update File: a.py\n*** End Patch"}}' | bash .claude/hooks/codex-adapter.sh pre-edit
+          OUT=$(git status --porcelain)
+          [ -z "$(echo "$OUT" | grep -v -E '^\?\? \.(claude|agents|codex)/$')" ] || { echo "❌ hooks wrote files: $OUT"; exit 1; }
 
       - name: init-cleanup.sh — 9 single-stack dry-run expected counts
         run: |
           set -euo pipefail
           declare -A EXPECT=(
-            [kotlin]="18 10 29"
-            [go]="19 10 29"
-            [python]="15 8 29"
+            [kotlin]="18 11 29"
+            [go]="19 11 29"
+            [python]="15 9 29"
             [nextjs]="19 11 29"
             [flutter]="19 13 29"
-            [infra]="22 11 29"
-            [marketing]="23 16 27"
-            [sales]="23 16 27"
-            [product]="23 16 26"
+            [infra]="22 12 29"
+            [marketing]="23 17 27"
+            [sales]="23 17 27"
+            [product]="23 17 26"
           )
           FAIL=0
           for MODE in "${!EXPECT[@]}"; do
             TARGET=$(mktemp -d)
-            (cd "$TARGET" && bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null)
+            (cd "$TARGET" && STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null)
             RESULT=$(cd "$TARGET" && bash "$GITHUB_WORKSPACE/.claude/scripts/init-cleanup.sh" "$MODE" 2>&1)
             A=$(echo "$RESULT" | grep "agents:" | head -1 | grep -oE '[0-9]+')
             S=$(echo "$RESULT" | grep "skills:" | head -1 | grep -oE '[0-9]+')
@@ -353,15 +414,15 @@ jobs:
           set -euo pipefail
           TARGET=$(mktemp -d)
           cd "$TARGET"
-          bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null
-          mkdir -p .claude/agents/custom .claude/skills/custom .claude/hooks/custom .claude/commands/custom
+          STARTER_SRC="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/bootstrap.sh" > /dev/null
+          mkdir -p .claude/agents/custom .agents/skills/my-skill .claude/hooks/custom .claude/commands/custom
           echo "ag" > .claude/agents/custom/a.md
-          echo "sk" > .claude/skills/custom/s.md
+          printf -- '---\nname: my-skill\ndescription: x\n---\n' > .agents/skills/my-skill/SKILL.md
           echo "hk" > .claude/hooks/custom/h.sh
           echo "cm" > .claude/commands/custom/c.md
           bash "$GITHUB_WORKSPACE/.claude/scripts/init-cleanup.sh" kotlin --apply > /dev/null
-          for f in agents/custom/a.md skills/custom/s.md hooks/custom/h.sh commands/custom/c.md; do
-            [ -f ".claude/$f" ] || { echo "❌ LOST: $f"; exit 1; }
+          for f in .claude/agents/custom/a.md .agents/skills/my-skill/SKILL.md .claude/hooks/custom/h.sh .claude/commands/custom/c.md .agents/skills/commit/SKILL.md .agents/skills/pr/SKILL.md; do
+            [ -f "$f" ] || { echo "❌ LOST: $f"; exit 1; }
           done
           [ "$(ls .claude/agents/*.md | wc -l | tr -d ' ')" = "9" ]
-          [ "$(ls .agents/skills/*.md | wc -l | tr -d ' ')" = "9" ]   # 8 + mcp-presets (v1.38.0)
+          [ "$(ls -d .agents/skills/*/ | wc -l | tr -d ' ')" = "27" ]   # 9 패턴 + 17 워크플로 + my-skill

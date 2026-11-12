@@ -1,6 +1,6 @@
 ---
 name: harness
-description: Claude Code 하네스(settings.json, hooks, agents)를 검증·dry-run·수정. 토큰 사용량 추정과 권한 중복 탐지도 포함.
+description: 에이전트 하네스(Claude settings.json·.codex·hooks·agents·skills)를 검증·dry-run·수정. 토큰 추정·권한 중복 탐지 포함.
 argument-hint: "[check | doctor | dry-run <hook> | size | lint-settings]"
 ---
 
@@ -27,14 +27,21 @@ Claude Code 하네스 엔지니어링 전용 커맨드. 인수에 따라 서브 
    - `settings.json` 에 참조된 훅 경로가 실제 존재하는지 확인
 
 3. **Agent / Skill / Command description 길이**
-   - 각 `agents/*.md`, `commands/*.md` 의 frontmatter `description` 길이 평균·최대 출력
+   - 각 `.claude/agents/*.md`, `.agents/skills/*/SKILL.md` 의 frontmatter `description` 길이 평균·최대 출력
    - 300자 초과 description 경고 (세션마다 로드됨)
 
 4. **AGENTS.md 크기**
    - 현재 AGENTS.md 줄 수 → 150줄 초과 시 경고
    - `memory/MEMORY.md` 라인 수 → 200줄 초과 시 경고
 
-5. **stacks.json 일관성** (모노레포)
+5. **Codex 계층** (`.codex/` 있을 때)
+   - `jq . .codex/hooks.json` · 참조 훅 경로 존재
+   - `python3 .claude/scripts/gen-codex-agents.py --check` — `.claude/agents` 와 `.codex/agents` 동기화
+   - `.claude/skills` 가 `../.agents/skills` 심볼릭 링크인지 (플랫폼 claude|both)
+   - 지침 파일 충돌: `CLAUDE.md` 가 남아 있으면 경고 (AGENTS.md 가 무시됨)
+   - `git config core.hooksPath` = `.claude/githooks` 인지 (아니면 `setup-git-hooks.sh` 안내)
+
+6. **stacks.json 일관성** (모노레포)
    - 각 stack.path 가 실제 디렉토리인지
    - type 이 감지 가능한지 (`go.mod`, `pyproject.toml`, `pubspec.yaml`, `package.json`, `build.gradle.kts`)
 
@@ -78,7 +85,7 @@ echo "exit=$?"
 | AGENTS.md | ... | ... | 매번 |
 | settings.json 내 allow/deny | ... | ... | 매번 |
 | agents/*.md frontmatter | ... | ... | 매번 (Agent schema) |
-| commands/*.md frontmatter | ... | ... | 매번 (skill list) |
+| skills/*/SKILL.md frontmatter | ... | ... | 매번 (skill list) |
 | skills/*/SKILL.md | (on-invoke) | - | 호출 시만 |
 
 `wc` 로 집계해 표 형태로 출력.

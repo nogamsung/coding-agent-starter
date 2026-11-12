@@ -49,7 +49,7 @@ KEEP_SKILLS_COMMON="security-patterns observability-patterns mcp-presets"
 # 워크플로 skill (구 commands) — 모든 모드에서 유지
 WORKFLOW_SKILLS="commit harness init marketing memory merge new plan pr release review rule start starter test upgrade handoff"
 SKILLS_DIR=.agents/skills
-KEEP_TEMPLATES_COMMON="prd.md role-prompt.md memory.md"
+KEEP_TEMPLATES_COMMON="prd.md role-prompt.md memory.md gitleaks.toml optional-skills.json"
 
 # stack 별 유지 목록 (한 줄에 type:vals 형식)
 keep_for_stack() {
