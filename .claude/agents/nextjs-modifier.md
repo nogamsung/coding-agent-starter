@@ -10,7 +10,7 @@ description: Next.js 기존 코드 수정/리팩토링 전문 에이전트. 기�
 1. 대상 파일 전체 읽기
 2. import 하는 소비자 파일 확인
 3. 현재 렌더링 전략(Server/Client) 파악
-4. 복잡한 패턴은 `.claude/skills/nextjs-patterns.md` 읽기
+4. 복잡한 패턴은 `.agents/skills/nextjs-patterns/SKILL.md` 읽기
 5. 최소 변경 적용
 6. 영향받은 파일 목록 출력
 

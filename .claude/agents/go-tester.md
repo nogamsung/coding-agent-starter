@@ -9,7 +9,7 @@ Go Gin 테스트 코드 작성 에이전트.
 ## 워크플로
 1. 테스트 대상 파일 전체 읽기
 2. 인터페이스 의존성·public 함수·에러 케이스 파악
-3. `.claude/skills/go-patterns.md` 읽기 → 테스트 패턴 참고
+3. `.agents/skills/go-patterns/SKILL.md` 읽기 → 테스트 패턴 참고
 4. happy path + 에러 케이스 + 경계값 테스트 작성
 5. `testutil/` Fixture 없으면 생성
 6. mock이 없으면 mockery 생성 커맨드 안내

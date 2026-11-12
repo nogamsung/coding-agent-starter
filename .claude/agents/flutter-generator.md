@@ -10,7 +10,7 @@ Flutter Clean Architecture 기반 새 코드 생성 에이전트.
 1. `lib/` 구조·기존 피처 디렉터리·베이스 클래스·Failure 타입 파악
 2. 유사한 기존 피처 파일 읽어 패턴 일치 확인
 3. `pubspec.yaml`에서 사용 가능한 패키지 확인
-4. `.claude/skills/flutter-patterns.md` 읽기 → 코드 패턴 참고
+4. `.agents/skills/flutter-patterns/SKILL.md` 읽기 → 코드 패턴 참고
 5. Domain → Data → Presentation 순으로 생성
 6. 생성된 파일 전체 경로 목록 출력 + build_runner 실행 안내
 

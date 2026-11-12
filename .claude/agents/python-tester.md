@@ -9,7 +9,7 @@ Python FastAPI 테스트 코드 작성 에이전트.
 ## 워크플로
 1. 테스트 대상 파일 전체 읽기
 2. 의존성·public 함수·예외 케이스 파악
-3. `.claude/skills/python-patterns.md` 읽기 → 테스트 패턴 참고
+3. `.agents/skills/python-patterns/SKILL.md` 읽기 → 테스트 패턴 참고
 4. happy path + 에러 케이스 + 경계값 테스트 작성
 5. `tests/fixtures/` Factory 없으면 생성
 6. `conftest.py` 에 공통 fixture (AsyncSession, client, overrides) 추가 필요하면 안내

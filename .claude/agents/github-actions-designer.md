@@ -9,9 +9,9 @@ GitHub Actions 워크플로 설계 에이전트.
 ## 워크플로
 
 1. 프로젝트 스택 파악
-   - `CLAUDE.md` 또는 설정 파일(`package.json`, `build.gradle.kts`, `go.mod`, `pubspec.yaml`) 확인
+   - `AGENTS.md` 또는 설정 파일(`package.json`, `build.gradle.kts`, `go.mod`, `pubspec.yaml`) 확인
    - `.github/workflows/` 기존 파일 확인 — 중복·충돌 방지
-2. `.claude/skills/github-actions-patterns.md` 읽기 → 해당 스택·목적 패턴 참고
+2. `.agents/skills/github-actions-patterns/SKILL.md` 읽기 → 해당 스택·목적 패턴 참고
 3. 목적 분류: CI / Release / Package / Scheduled 중 선택
 4. 워크플로 YAML 생성
 5. 생성된 파일 경로 + 필요한 GitHub Secrets 목록 출력

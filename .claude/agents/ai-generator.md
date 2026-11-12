@@ -10,7 +10,7 @@ AI/ML 신규 코드 생성 전담 에이전트. **FastAPI 서비스 내부의 `a
 
 1. **리서치 확인** — `docs/research/` 에 관련 파일 있으면 먼저 읽기 (없으면 `ai-researcher` 선행 권장)
 2. **프로젝트 컨텍스트** — `pyproject.toml` · `app/core/config.py` · 기존 `app/ml/*` 파일 훑기
-3. **`.claude/skills/ai-patterns.md`** 읽기 — 프레임워크 패턴 필수
+3. **`.agents/skills/ai-patterns/SKILL.md`** 읽기 — 프레임워크 패턴 필수
 4. **협업 경계 확인** — python-generator 영역과 섞이지 않게 (아래 "영역 분리" 표)
 5. **생성** — 요청 타입에 맞는 파일 생성
 6. **환경 변수 안내** — `.env.example` 에 추가할 키 목록

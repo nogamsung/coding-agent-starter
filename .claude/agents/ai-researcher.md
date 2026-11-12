@@ -24,9 +24,9 @@ AI/ML 리서치 전담 에이전트. 코드는 쓰지 않고 **의사결정 근�
 ## 작업 순서
 
 ### Step 1 — 컨텍스트 수집
-- 프로젝트 `CLAUDE.md` / `pyproject.toml` 읽기 → 기존 의존성·제약 파악
+- 프로젝트 `AGENTS.md` / `pyproject.toml` 읽기 → 기존 의존성·제약 파악
 - 기존 `docs/research/` 있으면 관련 이전 리서치 훑기
-- `.claude/skills/ai-patterns.md` 로 프로젝트 기본 스택 확인
+- `.agents/skills/ai-patterns/SKILL.md` 로 프로젝트 기본 스택 확인
 
 ### Step 2 — 질문 명확화 (최대 3개)
 

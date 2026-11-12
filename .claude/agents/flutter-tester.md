@@ -9,7 +9,7 @@ Flutter 테스트 코드 작성 에이전트.
 ## 워크플로
 1. 테스트 대상 파일 전체 읽기
 2. Provider 의존성·Widget 노출 요소 파악
-3. `.claude/skills/flutter-patterns.md` 읽기 → 테스트 패턴 참고
+3. `.agents/skills/flutter-patterns/SKILL.md` 읽기 → 테스트 패턴 참고
 4. loading/error/empty/populated 상태 커버
 5. Fixture 클래스 없으면 생성
 6. tearDown에서 모든 ProviderContainer dispose 확인

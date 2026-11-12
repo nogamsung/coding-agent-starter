@@ -19,12 +19,12 @@ concurrency:
 
 jobs:
   static-lints:
-    name: Static lints (CLAUDE.md cap · agent desc · plugin meta · settings · template cap)
+    name: Static lints (AGENTS.md cap · agent desc · plugin meta · settings · template cap)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: All CLAUDE.md ≤ 300 lines
+      - name: All AGENTS.md ≤ 300 lines
         run: |
           set -euo pipefail
           FAIL=0
@@ -34,18 +34,18 @@ jobs:
               echo "❌ $f: $LINES > 300"
               FAIL=1
             fi
-          done < <(find . -name 'CLAUDE.md' -o -name 'CLAUDE.*.md' | grep -v node_modules | grep -v .worktrees)
+          done < <(find . -name 'AGENTS.md' -o -name 'AGENTS.*.md' | grep -v node_modules | grep -v .worktrees)
           [ "$FAIL" = "0" ]
 
-      - name: Stack templates — CLAUDE.{stack}.md ≤ 120 lines
+      - name: Stack templates — AGENTS.{stack}.md ≤ 120 lines
         run: |
           set -euo pipefail
           MAX=120; FAIL=0
-          for f in .claude/templates/CLAUDE.*.md; do
+          for f in .claude/templates/AGENTS.*.md; do
             LINES=$(wc -l < "$f" | tr -d ' ')
             if [ "$LINES" -gt "$MAX" ]; then
               echo "❌ $f: $LINES > $MAX"
-              echo "   → 사용자 매 세션 토큰. 상세는 .claude/skills/ 로."
+              echo "   → 사용자 매 세션 토큰. 상세는 .agents/skills/ 로."
               FAIL=1
             fi
           done
@@ -130,7 +130,7 @@ jobs:
 
           MODES="kotlin go python nextjs flutter infra marketing sales product"
           ORPHAN_S=""
-          for skill in $(ls .claude/skills/*.md 2>/dev/null | xargs -n1 basename | sed 's/\.md$//'); do
+          for skill in $(ls .agents/skills/*.md 2>/dev/null | xargs -n1 basename | sed 's/\.md$//'); do
             KEPT=false
             for MODE in $MODES; do
               if ! bash .claude/scripts/init-cleanup.sh $MODE 2>&1 | grep -q "skills/$skill.md"; then
@@ -198,7 +198,7 @@ jobs:
               fi
             else
               # agent 또는 skill — 둘 중 하나에 있어야
-              if [ ! -f ".claude/agents/${name}.md" ] && [ ! -f ".claude/skills/${name}.md" ]; then
+              if [ ! -f ".claude/agents/${name}.md" ] && [ ! -f ".agents/skills/${name}.md" ]; then
                 echo "❌ keep 이름 '$name' — agents/${name}.md 또는 skills/${name}.md 둘 다 없음 (typo 가능)"
                 FAIL=1
               fi
@@ -291,7 +291,7 @@ jobs:
       - name: Version pin (--version)
         run: |
           set -euo pipefail
-          TAG=$(git ls-remote --tags --refs https://github.com/nogamsung/claude-code-starter.git | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -2 | head -1)
+          TAG=$(git ls-remote --tags --refs https://github.com/nogamsung/coding-agent-starter.git | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -2 | head -1)
           [ -z "$TAG" ] && { echo "ℹ️ no prior tag — skip"; exit 0; }
           TARGET=$(mktemp -d)
           cd "$TARGET"
@@ -301,7 +301,7 @@ jobs:
       - name: Update writes .starter-version-prev
         run: |
           set -euo pipefail
-          TAG=$(git ls-remote --tags --refs https://github.com/nogamsung/claude-code-starter.git | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          TAG=$(git ls-remote --tags --refs https://github.com/nogamsung/coding-agent-starter.git | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           [ -z "$TAG" ] && exit 0
           TARGET=$(mktemp -d)
           cd "$TARGET"
@@ -364,4 +364,4 @@ jobs:
             [ -f ".claude/$f" ] || { echo "❌ LOST: $f"; exit 1; }
           done
           [ "$(ls .claude/agents/*.md | wc -l | tr -d ' ')" = "9" ]
-          [ "$(ls .claude/skills/*.md | wc -l | tr -d ' ')" = "9" ]   # 8 + mcp-presets (v1.38.0)
+          [ "$(ls .agents/skills/*.md | wc -l | tr -d ' ')" = "9" ]   # 8 + mcp-presets (v1.38.0)

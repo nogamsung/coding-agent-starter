@@ -1,12 +1,12 @@
 #!/bin/bash
-# Claude Code Starter — 부트스트랩 스크립트
+# Coding Agent Starter — 부트스트랩 스크립트
 #
 # 신규 설치 또는 기존 프로젝트 업데이트에 모두 사용합니다.
 #
 # 사용법:
-#   curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash -s -- --version v1.18.0
-#   curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash -s -- --no-preserve
+#   curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash -s -- --version v1.18.0
+#   curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash -s -- --no-preserve
 #
 # 옵션:
 #   --version <ref>   특정 git 태그/브랜치/커밋으로 핀 (예: v1.17.0). 기본: main HEAD
@@ -21,7 +21,7 @@
 
 set -e
 
-REPO_URL="https://github.com/nogamsung/claude-code-starter.git"
+REPO_URL="https://github.com/nogamsung/coding-agent-starter.git"
 TMP_DIR=$(mktemp -d)
 TARGET_DIR="$(pwd)"
 PRESERVE_DIR=$(mktemp -d)
@@ -52,7 +52,7 @@ else
   PRESERVE=false   # install 시엔 보존할 게 없음
 fi
 
-echo "📦 Claude Code Starter"
+echo "📦 Coding Agent Starter"
 echo "   대상 디렉토리: $TARGET_DIR"
 echo "   모드: $MODE"
 [ "$MODE" = "update" ] && echo "   현재 버전: $OLD_VERSION"
@@ -92,7 +92,7 @@ if [ -n "$VERSION_REF" ]; then
   # depth=1 클론엔 임의 ref 없으니 다시 fetch
   git fetch --quiet --depth=1 origin "$VERSION_REF" 2>/dev/null || {
     echo "❌ 버전 ref '$VERSION_REF' 를 origin 에서 찾지 못했습니다."
-    echo "   사용 가능한 태그: https://github.com/nogamsung/claude-code-starter/tags"
+    echo "   사용 가능한 태그: https://github.com/nogamsung/coding-agent-starter/tags"
     rm -rf "$TMP_DIR" "$PRESERVE_DIR"
     exit 1
   }

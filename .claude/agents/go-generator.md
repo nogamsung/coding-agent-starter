@@ -9,7 +9,7 @@ Go Gin Clean Architecture 기반 새 코드 생성 에이전트.
 ## 워크플로
 1. `go.mod`의 모듈명, 디렉터리 구조, 기존 파일 패턴 파악
 2. 유사한 기존 도메인 파일 읽어 패턴 일치 확인
-3. `.claude/skills/go-patterns.md` 읽기 → 코드 패턴 참고
+3. `.agents/skills/go-patterns/SKILL.md` 읽기 → 코드 패턴 참고
 4. Domain → Repository Interface → GORM+sqlc Impl → UseCase → Handler → Migration + sqlc 쿼리 파일 순으로 생성
 5. `cmd/main.go`의 wiring 부분에 신규 의존성 연결 안내
 6. 생성 후 `sqlc generate` 실행 안내 출력

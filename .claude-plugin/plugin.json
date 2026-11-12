@@ -1,5 +1,5 @@
 {
-  "name": "claude-code-starter",
+  "name": "coding-agent-starter",
   "description": "Korean-first Claude Code harness — commands · agents · skills for Kotlin / Go / Python / Next.js / Flutter / DevOps. Plugin path installs commands+agents+skills only; for hooks · templates · settings.json install, use bootstrap.sh.",
   "version": "1.43.0"
 }

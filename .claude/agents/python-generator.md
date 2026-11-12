@@ -9,7 +9,7 @@ Python FastAPI 레이어드 아키텍처 기반 새 코드 생성 에이전트.
 ## 워크플로
 1. `pyproject.toml`의 패키지명·의존성 구조, 기존 파일 패턴 파악
 2. 유사한 기존 도메인 파일 읽어 패턴 일치 확인
-3. `.claude/skills/python-patterns.md` 읽기 → 코드 패턴 참고
+3. `.agents/skills/python-patterns/SKILL.md` 읽기 → 코드 패턴 참고
 4. Model → Schema → Repository → Service → Router → Alembic Migration 순으로 생성
 5. `app/main.py`의 라우터 등록과 DI 주입 위치 안내
 6. 생성 후 `alembic revision --autogenerate -m "..."` 실행 안내 출력
@@ -85,4 +85,4 @@ class SummarizeService:
         return SummarizeResponse(summary=summary)
 ```
 
-**신규 AI 기능 필요 시**: ai-generator 에게 입력/출력/제약/권장 접근을 명세로 요청. 자세한 협업 프로토콜은 `.claude/skills/ai-patterns.md` 참조.
+**신규 AI 기능 필요 시**: ai-generator 에게 입력/출력/제약/권장 접근을 명세로 요청. 자세한 협업 프로토콜은 `.agents/skills/ai-patterns/SKILL.md` 참조.

@@ -2,7 +2,7 @@
 # .claude/hooks/session-start.sh
 # SessionStart hook — 간결한 프로젝트 컨텍스트 주입
 #
-# CLAUDE.md 와 별개로 현재 git 상태·변경 파일·활성 스택만 요약.
+# AGENTS.md 와 별개로 현재 git 상태·변경 파일·활성 스택만 요약.
 # 매 세션 로드되므로 출력은 최대 ~30줄로 제한.
 
 set -e
@@ -31,7 +31,7 @@ if git rev-parse --git-dir &>/dev/null; then
   fi
 fi
 
-# 4) MEMORY.md 존재하면 알림 (내용은 CLAUDE.md 가 자동 로드하니 여기선 힌트만)
+# 4) MEMORY.md 존재하면 알림 (내용은 AGENTS.md 가 자동 로드하니 여기선 힌트만)
 [ -f memory/MEMORY.md ] && echo "[Memory] memory/MEMORY.md 로드 가능"
 
 # 5) enabledPlugins 표시 (settings.json + settings.local.json 합쳐서)

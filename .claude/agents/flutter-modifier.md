@@ -10,7 +10,7 @@ description: Flutter 기존 코드 수정/리팩토링 전문 에이전트. 기�
 1. 대상 파일 전체 읽기
 2. 위젯 사용처·Provider 구독처 검색
 3. `@freezed`·`@riverpod` 파일 수정 시 regeneration 범위 파악
-4. 복잡한 패턴은 `.claude/skills/flutter-patterns.md` 읽기
+4. 복잡한 패턴은 `.agents/skills/flutter-patterns/SKILL.md` 읽기
 5. 최소 변경 적용
 6. 영향받은 파일 목록 + build_runner 필요 여부 출력
 

@@ -1,6 +1,6 @@
 <div align="center">
 
-# Claude Code Starter
+# Coding Agent Starter
 
 **새 프로젝트에 Claude Code 하네스를 10초 만에 구성하는 설정 모음**
 
@@ -37,7 +37,7 @@ Claude Code를 프로젝트에서 바로 활용할 수 있도록 **커맨드, �
 - **멀티 모듈 지원** — Gradle 멀티 모듈 / Turborepo / Go Workspace
 - **DB 설계 자동화** — `/plan db` 로 MySQL 스키마 → Flyway/golang-migrate SQL
 - **API 설계 자동화** — `/plan api` 로 REST API 설계 → OpenAPI 3.0 YAML → 코드 생성
-- **모노레포 모드** — `backend/` + `frontend/` + `mobile/` 공존 자동 감지 → 역할별 CLAUDE.md + 경로 가드 hooks
+- **모노레포 모드** — `backend/` + `frontend/` + `mobile/` 공존 자동 감지 → 역할별 AGENTS.md + 경로 가드 hooks
 - **`/start` 단일 진입점** — 신규 기능 한 번에: worktree + PRD + 역할별 프롬프트 + 자동 구현. 단일 스택은 무확인, 모노레포는 1회만 확인
 - **기획자 에이전트** — `/plan` (또는 `/start`) 가 요청 → PRD + 역할별 구현 프롬프트 자동 생성. Agent Teams 로 병렬 구현도 옵션
 - **`/commit` → `/pr` → `/merge` 자동 체인** — 각 단계에서 다음 단계를 제안(수락 시 연결 실행). 완전 자동이 아닌 "연속 확인" 체인
@@ -55,7 +55,7 @@ Claude Code를 프로젝트에서 바로 활용할 수 있도록 **커맨드, �
 **방법 A — 부트스트랩 스크립트 (권장)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash
 ```
 
 - `.claude/` 폴더가 **없으면** install 모드 — 새로 설치
@@ -82,17 +82,17 @@ curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve
 **방법 B — 수동 복사**
 
 ```bash
-git clone --depth=1 https://github.com/nogamsung/claude-code-starter.git
+git clone --depth=1 https://github.com/nogamsung/coding-agent-starter.git
 rm -rf /path/to/your-project/.claude
-cp -r claude-code-starter/.claude /path/to/your-project/
-rm -rf claude-code-starter
+cp -r coding-agent-starter/.claude /path/to/your-project/
+rm -rf coding-agent-starter
 ```
 
 **방법 C — Plugin marketplace** (실험적, v1.28.0+)
 
 ```
-/plugin marketplace add nogamsung/claude-code-starter
-/plugin install claude-code-starter@claude-code-starter
+/plugin marketplace add nogamsung/coding-agent-starter
+/plugin install coding-agent-starter@coding-agent-starter
 ```
 
 > ⚠️ **한계**: plugin 경로는 `commands` · `agents` · `skills` 만 install 합니다. `hooks` · `templates` · `settings.json` · `memory/` 는 plugin 시스템이 다루지 않으므로 **bootstrap.sh 가 여전히 권장 entry point** 입니다. plugin 경로는 일부 자산만 가벼이 사용하고 싶을 때.
@@ -143,7 +143,7 @@ rm -rf claude-code-starter
 
 1. 스택 자동 감지 (인수 생략 시)
 2. 선택 스택과 무관한 agent/template/skill 제거 (커맨드는 전부 유지 — 디스패처가 분기)
-3. `CLAUDE.md` 설치 — 아키텍처 규칙, 컨벤션
+3. `AGENTS.md` 설치 — 아키텍처 규칙, 컨벤션
 4. `.claude/settings.json` 설치 — 스택별 허용 명령어 + 자동 lint/test 훅
 5. `memory/MEMORY.md` 초기화 — 프로젝트 정보 인터뷰 후 기록
 6. `dev` 브랜치 생성 + `.worktrees/` gitignore 등록
@@ -187,7 +187,7 @@ rm -rf claude-code-starter
 /new User                      # 개별 리소스 스캐폴딩 (스택 자동 감지)
 /test <파일>                   # 테스트 자동 생성
 /review staged                 # 독립 리뷰
-/rule <실수 설명>              # AI 실수를 CLAUDE.md 규칙 등록
+/rule <실수 설명>              # AI 실수를 AGENTS.md 규칙 등록
 /memory add <내용>             # 결정·교훈 수동 기록 (조회는 자동 로드됨)
 ```
 
@@ -245,7 +245,7 @@ main  ←──── dev  ←──── feature/{name}
 | `/commit [힌트]` | Conventional Commits 커밋 + `/pr` 자동 제안 (피처 브랜치) |
 | `/pr` | PR 생성 + `/merge` 자동 제안 |
 | `/merge [auto]` | GitHub 머지 실행 + main 최신화 + 버전 태그 + worktree 정리 |
-| `/rule <설명>` | AI 실수를 CLAUDE.md 규칙으로 등록 |
+| `/rule <설명>` | AI 실수를 AGENTS.md 규칙으로 등록 |
 | `/memory [add\|search]` | Second Brain 기억 추가·검색 (전체 조회는 자동 로드) |
 | `/marketing [category task\|자연어]` | 마케팅 작업 라우터 — 35개 `marketing-skills:*` 스킬을 6개 카테고리로 분기 |
 | `/starter [check\|update]` | 스타터 버전 확인 / 재설치 |
@@ -358,7 +358,7 @@ v1.6.0은 커맨드 16개를 10개로 통합했습니다. 기존 커맨드 이�
 ## 디렉토리 구조
 
 ```
-claude-code-starter/
+coding-agent-starter/
 ├── .github/
 │   └── assets/               # README 이미지 (init 시 삭제)
 ├── .claude/
@@ -404,9 +404,9 @@ claude-code-starter/
 │   │   ├── docker-patterns.md      # 스택별 멀티스테이지 Dockerfile + compose
 │   │   └── cache-patterns.md       # Redis 패턴 (cache/rate-limit/lock/session)
 │   ├── templates/            # 스택별 설치 템플릿
-│   │   ├── CLAUDE.{kotlin,go,python,nextjs,flutter}.md
-│   │   ├── CLAUDE.{kotlin,go,python,nextjs}-multi.md
-│   │   ├── CLAUDE.monorepo.md      # 루트 인덱스 (모노레포 모드)
+│   │   ├── AGENTS.{kotlin,go,python,nextjs,flutter}.md
+│   │   ├── AGENTS.{kotlin,go,python,nextjs}-multi.md
+│   │   ├── AGENTS.monorepo.md      # 루트 인덱스 (모노레포 모드)
 │   │   ├── settings.{kotlin,go,python,nextjs,flutter}.json
 │   │   ├── settings.{kotlin,go,python,nextjs}-multi.json
 │   │   ├── settings.monorepo.json  # 병합 settings (경로 가드 hooks)

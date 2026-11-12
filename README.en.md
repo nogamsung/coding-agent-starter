@@ -1,6 +1,6 @@
 <div align="center">
 
-# Claude Code Starter
+# Coding Agent Starter
 
 **Set up a Claude Code harness for a new project in 10 seconds**
 
@@ -31,13 +31,13 @@ A starter that pre-configures **commands, agents, and templates** so you can imm
 - One-shot `/init` configures the harness for the detected stack
 - Specialized stack-specific subagents split generation, modification, and testing
 - **Dispatcher commands** — `/new`, `/plan`, `/review` consolidate all create / plan / review workflows
-- A `/rule` feedback loop accumulates rules into `CLAUDE.md` whenever the AI slips, sharpening the harness over time
+- A `/rule` feedback loop accumulates rules into `AGENTS.md` whenever the AI slips, sharpening the harness over time
 - `memory/MEMORY.md` is auto-loaded at session start — past decisions and lessons are always in context
 - **Parallel work via Git Worktrees** — `/new worktree` lets you develop multiple features simultaneously
 - **Multi-module support** — Gradle multi-module / Turborepo / Go Workspace
 - **DB design automation** — `/plan db` produces MySQL schema → Flyway / golang-migrate SQL
 - **API design automation** — `/plan api` produces REST API design → OpenAPI 3.0 YAML → code generation
-- **Monorepo mode** — auto-detects `backend/` + `frontend/` + `mobile/` cohabitation → role-specific CLAUDE.md + path guard hooks
+- **Monorepo mode** — auto-detects `backend/` + `frontend/` + `mobile/` cohabitation → role-specific AGENTS.md + path guard hooks
 - **`/start` single entry point** — start a new feature in one shot: worktree + PRD + role-specific prompts + auto-implementation. Single stack runs without confirmation, monorepo asks once.
 - **Planner agent** — `/plan` (or `/start`) turns a request into PRD + role-specific implementation prompts. Optional Agent Teams for parallel implementation.
 - **`/commit` → `/pr` → `/merge` chain** — each step proposes the next (executes upon acceptance). Not full automation but a "continuous confirmation" chain.
@@ -55,7 +55,7 @@ A starter that pre-configures **commands, agents, and templates** so you can imm
 **Option A — Bootstrap script (recommended)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nogamsung/claude-code-starter/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash
 ```
 
 - If `.claude/` does **not exist** → install mode — fresh install
@@ -82,17 +82,17 @@ curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve
 **Option B — Manual copy**
 
 ```bash
-git clone --depth=1 https://github.com/nogamsung/claude-code-starter.git
+git clone --depth=1 https://github.com/nogamsung/coding-agent-starter.git
 rm -rf /path/to/your-project/.claude
-cp -r claude-code-starter/.claude /path/to/your-project/
-rm -rf claude-code-starter
+cp -r coding-agent-starter/.claude /path/to/your-project/
+rm -rf coding-agent-starter
 ```
 
 **Option C — Plugin marketplace** (experimental, v1.28.0+)
 
 ```
-/plugin marketplace add nogamsung/claude-code-starter
-/plugin install claude-code-starter@claude-code-starter
+/plugin marketplace add nogamsung/coding-agent-starter
+/plugin install coding-agent-starter@coding-agent-starter
 ```
 
 > ⚠️ **Limitation**: the plugin path installs only `commands` · `agents` · `skills`. `hooks` · `templates` · `settings.json` · `memory/` are outside the plugin system, so **`bootstrap.sh` remains the primary entry point**. Use the plugin path when you only want a subset of assets.
@@ -143,7 +143,7 @@ rm -rf claude-code-starter
 
 1. Auto-detect stack (when no argument given)
 2. Remove agents/templates/skills unrelated to the chosen stack (commands stay — dispatchers branch internally)
-3. Install `CLAUDE.md` — architecture rules, conventions
+3. Install `AGENTS.md` — architecture rules, conventions
 4. Install `.claude/settings.json` — stack-specific allowed commands + auto lint/test hooks
 5. Initialize `memory/MEMORY.md` — record after a project info interview
 6. Create the `dev` branch + register `.worktrees/` in gitignore
@@ -187,7 +187,7 @@ rm -rf claude-code-starter
 /new User                         # Single-resource scaffolding (stack auto-detected)
 /test <file>                      # Auto-generate tests
 /review staged                    # Standalone review
-/rule <slip description>          # Register an AI slip as a CLAUDE.md rule
+/rule <slip description>          # Register an AI slip as a AGENTS.md rule
 /memory add <content>             # Manually record decisions/lessons (lookups auto-load)
 ```
 
@@ -246,7 +246,7 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 | `/commit [hint]` | Conventional Commits + auto `/pr` suggestion (feature branches) |
 | `/pr` | Create PR + auto `/merge` suggestion |
 | `/merge [auto]` | GitHub merge + main sync + version tag + worktree cleanup |
-| `/rule <description>` | Register an AI slip as a CLAUDE.md rule |
+| `/rule <description>` | Register an AI slip as a AGENTS.md rule |
 | `/memory [add\|search]` | Second Brain entry/search (full content auto-loads) |
 | `/marketing [category task\|natural language]` | Marketing router — branches 35 `marketing-skills:*` skills into 6 categories |
 | `/starter [check\|update\|rollback]` | Check / install / rollback the starter |
@@ -326,7 +326,7 @@ After `/init`, the installed `settings.json` includes stack-specific automatic c
 | Before task end | `gradlew test` | `tsc` + `jest` | `flutter test` | `go test ./...` | `ruff` + `mypy` |
 | **Before git push** | **Jacoco ≥ 90%** | **Jest ≥ 90%** | **Flutter ≥ 90%** | **Go ≥ 90%** | **pytest-cov ≥ 90%** |
 
-The session-start hook also displays active plugins and a 300-line cap warning for `CLAUDE.md` is enforced via `post-edit-lint.sh`.
+The session-start hook also displays active plugins and a 300-line cap warning for `AGENTS.md` is enforced via `post-edit-lint.sh`.
 
 ---
 
@@ -366,7 +366,7 @@ v1.6.0 consolidated 16 commands into 10. Old command names **no longer work**. R
 ## Directory structure
 
 ```
-claude-code-starter/
+coding-agent-starter/
 ├── .github/
 │   ├── assets/                    # README images (deleted on init)
 │   └── workflows/
@@ -384,13 +384,13 @@ claude-code-starter/
 │   │   ├── ai-patterns.md · ai-eval-patterns.md  # LLM dev + golden/judge regression
 │   │   ├── terraform-patterns.md · kubernetes-patterns.md · helm-patterns.md
 │   │   └── mcp-presets.md                 # Recommended mcpServers per stack
-│   ├── templates/                 # Per-stack install templates (incl. CLAUDE.infra.md)
+│   ├── templates/                 # Per-stack install templates (incl. AGENTS.infra.md)
 │   ├── .starter-version           # Installed starter version (team-shared)
 │   ├── .starter-version-prev      # Previous version (rollback metadata)
 │   └── hooks/
 │       ├── session-start.sh       # Session start — git/stack/plugins summary
 │       ├── safety-guard.sh        # PreToolUse — block risky commands on protected branches
-│       ├── post-edit-lint.sh      # PostToolUse — file-extension-based lint + CLAUDE.md 300-line guard
+│       ├── post-edit-lint.sh      # PostToolUse — file-extension-based lint + AGENTS.md 300-line guard
 │       └── pre-push.sh            # Coverage gate (all active stacks)
 ├── memory/
 │   └── MEMORY.md                  # This repo's Second Brain
