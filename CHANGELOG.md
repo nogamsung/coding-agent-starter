@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `bootstrap.sh --version <tag>` 이 설치를 끝내고도 exit 1 로 끝날 수 있던 문제 — 최신 git(2.5x)이 임시 clone 에서 자동 gc/maintenance 를 백그라운드로 돌려 종료 시 임시 디렉토리 삭제와 경합. 임시 clone·fetch 에서 자동 정리를 끄고, 정리 실패가 exit code 를 바꾸지 않게 함
 - `/commit` skill 의 README 동기화 표가 v1 경로(`.claude/commands/`)를 보고 있어 새 skill 추가 시 README 갱신 제안이 나오지 않던 문제 — `.agents/skills/` 기준으로 변경, 훅 추가 행 신설
 - `/release` skill 의 커밋 타입 추론에서 v1 경로 `.claude/commands/` 제거
 
