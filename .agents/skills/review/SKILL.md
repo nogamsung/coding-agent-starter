@@ -1,7 +1,7 @@
 ---
 name: review
 description: 코드 리뷰. 파일/staged/diff 범용 리뷰 또는 REST API 전용 리뷰(api 모드)를 통합 제공
-argument-hint: "[api | <파일경로> | staged | diff] (없으면 현재 대화 컨텍스트)"
+argument-hint: "[api | cross | <파일경로> | staged | diff] (없으면 현재 대화 컨텍스트)"
 ---
 
 `code-reviewer` 에이전트로 리뷰를 진행합니다.
@@ -17,10 +17,25 @@ argument-hint: "[api | <파일경로> | staged | diff] (없으면 현재 대화 
 | 첫 토큰 | 모드 | 대상 |
 |--------|------|------|
 | `api` | [API 전용 리뷰](#api-모드) | Controller/Handler 스캔 (Kotlin·Go 전용) |
+| `cross` | [교차 리뷰](#cross-모드) | base 대비 브랜치 변경분을 반대 플랫폼 모델이 리뷰 |
 | `staged` | 범용 리뷰 | `git diff --staged` |
 | `diff` | 범용 리뷰 | `git diff HEAD` |
 | 파일 경로 | 범용 리뷰 | 해당 파일 |
 | (없음) | 범용 리뷰 | 현재 대화 컨텍스트 또는 사용자에게 물어봄 |
+
+---
+
+## cross 모드
+
+`/pr` 전에 브랜치 변경분을 **다른 모델**(Claude 작업은 Codex, Codex 작업은 Claude)에게 미리 보이고 싶을 때.
+
+```bash
+bash .claude/scripts/cross-review.sh            # base 자동 · --reviewer codex|claude 로 지정 가능
+```
+
+- diff 와 주변 소스가 반대 플랫폼 서비스로 전송된다 — `harness.crossReview=false` 면 실행하지 않고 알린다.
+- 종료 코드: `0` 리포트(마지막 줄 `VERDICT:`) · `3` 반대 플랫폼 usage limit (이때만 `code-reviewer` 로 대체) · `1` 오류(CLI 미설치 포함 — 원인 안내).
+- 지적은 코드로 하나씩 확인한 뒤 맞는 것만 반영한다.
 
 ---
 

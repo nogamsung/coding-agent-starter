@@ -17,7 +17,7 @@ argument-hint: "<기능 설명> [--no-worktree | --output-only | --marketing | -
 
 | 플래그 | 동작 |
 |--------|------|
-| `--no-worktree` | worktree 생성 없이 현재 위치에서 진행 (이미 worktree 안일 때) |
+| `--no-worktree` | worktree 생성 없이 현재 위치에서 진행 (이미 worktree 안일 때, 또는 worktree 가드를 끈 프로젝트) |
 | `--output-only` | PRD/프롬프트만 생성, generator agent 실행 없음 |
 | `--marketing` / `--sales` / `--gtm` | GTM 문서 추가 생성 (`/plan` 의 동일 플래그와 호환) |
 
@@ -32,18 +32,26 @@ argument-hint: "<기능 설명> [--no-worktree | --output-only | --marketing | -
 
 ## Step 3 — Worktree 생성 (`--no-worktree` 가 아니면)
 
+> **worktree 가 먼저다.** 메인 체크아웃(허브)은 통합·머지·메타파일용이고, 소스 편집은 worktree 안에서만 한다.
+> `harness.worktreeGuard`(기본 켜짐)가 켜져 있으면 허브에서의 소스 편집은 `.claude/hooks/worktree-guard.sh`(편집 시점, Claude·Codex)와
+> `.claude/githooks/pre-commit`(커밋 시점, 모든 도구)이 막는다. 막히면 우회하지 말고 이 단계로 worktree 를 만든다.
+> 허브에서 `--no-worktree` 를 주면 가드가 켜진 프로젝트에선 편집이 차단되므로 사용자에게 알리고 worktree 생성으로 돌아간다.
+
 `/new worktree feature-{name}` 와 동일 로직 — 자세한 규칙은 `.agents/skills/new/SKILL.md` 의 worktree 섹션 참고.
 
 요약:
 1. `.gitignore` 에 `.worktrees/` 등록 (없으면)
 2. `git fetch origin --quiet || true`
-3. base ref 결정: 원격 `dev` 있으면 `origin/dev`, 없으면 `origin/main`
+3. base ref 결정: `source .claude/hooks/lib.sh; BASE=$(base_branch)` (harness.baseBranch → 원격 `dev` 있으면 `dev` → `main`), `BASE_REF=origin/$BASE`
 4. `git worktree add .worktrees/feature-{name} -b feature/{name} "$BASE_REF"`
 5. 스택별 의존성 자동 설치 (gradle / npm / go / flutter / uv)
 6. **이후 모든 작업은 worktree 디렉토리 기준** — 사용자에게 1줄로 보고:
    > `→ worktree 생성: .worktrees/feature-{name} (base: $BASE_LABEL)`
 
-이미 `.worktrees/` 안에서 호출됐으면 자동으로 `--no-worktree` 동작.
+이미 linked worktree 안에서 호출됐으면(`git rev-parse --git-dir` ≠ `--git-common-dir`) 자동으로 `--no-worktree` 동작.
+
+> **새 세션에서 이어받기**: worktree 디렉토리에서 Claude 든 Codex 든 새 세션을 열면 된다. 도구를 바꾸거나 사용 한도에 걸려
+> 중간에 넘길 때는 `/handoff` 로 인계 메모를 남기면 다음 세션 시작 시 자동으로 읽힌다.
 
 ## Step 4 — 모드 판정
 
@@ -66,6 +74,8 @@ argument-hint: "<기능 설명> [--no-worktree | --output-only | --marketing | -
 - **(모노레포)** 스택 범위: backend only / full-stack / mobile 포함
 
 ## Step 6 — `planner` agent 호출
+
+> 아래 `Agent(...)` 표기는 Claude 기준. Codex 는 같은 이름의 서브에이전트(`.codex/agents/<name>.toml`)를 spawn 하고, 없으면 `.claude/agents/<name>.md` 지침을 읽어 직접 수행한다. 이하 모든 agent 호출 동일.
 
 ```
 Agent(
@@ -160,8 +170,9 @@ PRD:         docs/specs/{feature}.md
 
 다음:
   /commit                   → 변경사항 커밋
-  /pr                       → PR 생성 (base: $BASE_LABEL 자동 감지)
+  /pr                       → 보안·교차 리뷰 + PR 생성 (base: $BASE_LABEL 자동 감지)
   /merge                    → 머지 + 태그 + worktree 정리
+  /handoff                  → (도구 전환·세션 교체 시) 인계 메모
 ```
 
 ---

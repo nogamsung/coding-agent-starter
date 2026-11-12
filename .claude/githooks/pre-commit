@@ -1,0 +1,73 @@
+#!/bin/bash
+# .claude/githooks/pre-commit — 플랫폼 공통 커밋 가드 (Claude·Codex·터미널 어디서 커밋해도 같다)
+#   1) Codex 서브에이전트 생성물 동기화 검사   (.codex/ 가 설치된 경우만)
+#   2) 시크릿 스캔 (gitleaks 설치된 경우만, 스테이징 변경분)
+#   3) 메인 체크아웃(허브)에서 소스 파일 커밋 차단 (stacks.json 있고 harness.worktreeGuard != false 일 때)
+# 판정 규칙(메타파일 예외 목록)은 .claude/hooks/worktree-guard.sh 를 그대로 쓴다.
+# 활성화: bash .claude/scripts/setup-git-hooks.sh  (core.hooksPath=.claude/githooks)
+# 우회:   git commit --no-verify
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -d "$ROOT/.claude" ] || exit 0
+cd "$ROOT" || exit 0
+
+# 1) 서브에이전트 정의는 .claude/agents 가 원본, .codex/agents 는 생성물 — 어긋난 채 커밋하지 않는다
+if [ -d .codex ] && [ -f .claude/scripts/gen-codex-agents.py ] && command -v python3 >/dev/null 2>&1 \
+   && git diff --cached --name-only | grep -qE '^\.(claude|codex)/agents/'; then
+  python3 .claude/scripts/gen-codex-agents.py --check --index || {
+    echo "[pre-commit] 차단: .codex/agents 가 .claude/agents 와 어긋남 → python3 .claude/scripts/gen-codex-agents.py 후 다시 add" >&2
+    exit 1
+  }
+fi
+
+# 2) 시크릿 스캔 — 없으면 건너뛰고 CI secret-scan 이 막는다. 설치: brew install gitleaks · 오탐은 .gitleaks.toml
+if command -v gitleaks >/dev/null 2>&1; then
+  GL_CFG=()
+  [ -f .gitleaks.toml ] && GL_CFG=(--config "$ROOT/.gitleaks.toml")
+  gitleaks git --pre-commit --staged --redact --no-banner "${GL_CFG[@]}" "$ROOT" || {
+    echo "[pre-commit] 차단: 커밋에 시크릿으로 보이는 값이 있습니다(위 gitleaks 결과). 오탐이면 .gitleaks.toml 에 근거와 함께 추가." >&2
+    exit 1
+  }
+fi
+
+# 3) 허브 소스 커밋 차단
+[ -f .claude/stacks.json ] || exit 0
+GUARD="$ROOT/.claude/hooks/worktree-guard.sh"
+[ -f "$GUARD" ] || exit 0
+command -v python3 >/dev/null 2>&1 || exit 0
+ENABLED=$(python3 -c 'import json,sys
+try: print(str(json.load(open(".claude/stacks.json")).get("harness",{}).get("worktreeGuard",True)).lower())
+except Exception: print("true")' 2>/dev/null)
+[ "$ENABLED" = "false" ] && exit 0
+
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" && pwd) || exit 0
+COMMON_DIR=$(cd "$(git rev-parse --git-common-dir)" && pwd) || exit 0
+[ "$GIT_DIR" = "$COMMON_DIR" ] || exit 0          # linked worktree 안의 커밋 → 관여 안 함
+[ -f "$GIT_DIR/MERGE_HEAD" ] && exit 0            # 머지 충돌 해결 커밋은 허브의 정상 작업
+
+BLOCKED=()
+while IFS= read -r -d '' FILE; do
+  PAYLOAD=$(python3 -c 'import json, sys; print(json.dumps({"tool_input": {"file_path": sys.argv[1]}}))' "$ROOT/$FILE")
+  if ! printf '%s' "$PAYLOAD" | bash "$GUARD" >/dev/null 2>&1; then
+    BLOCKED+=("$FILE")
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+[ ${#BLOCKED[@]} -eq 0 ] && exit 0
+
+BASE=main
+if [ -f .claude/hooks/lib.sh ]; then
+  # shellcheck disable=SC1091
+  B=$(source .claude/hooks/lib.sh >/dev/null 2>&1 && base_branch 2>/dev/null) && [ -n "$B" ] && BASE="$B"
+fi
+BRANCH=$(git branch --show-current 2>/dev/null || echo "?")
+{
+  echo "[pre-commit] 차단: 메인 체크아웃(브랜치 $BRANCH)에서 소스 파일 커밋 — 허브 전용입니다."
+  printf '  - %s\n' "${BLOCKED[@]}"
+  echo ""
+  echo "  → worktree 에서 작업하세요 (/start 가 자동 생성):"
+  echo "      git worktree add .worktrees/<type-name> -b <type>/<name> origin/$BASE"
+  echo "  메타파일(.claude/, .codex/, .agents/, docs/, memory/, 루트 *.md 등)은 메인에서 커밋 가능합니다."
+  echo "  끄기: .claude/stacks.json 의 \"harness\": {\"worktreeGuard\": false}"
+} >&2
+exit 1

@@ -1,0 +1,17 @@
+#!/bin/bash
+# .claude/githooks/pre-push — 빌드·커버리지 게이트 (Claude·Codex·터미널 공통)
+# 판정은 .claude/hooks/pre-push.sh 에 맡긴다 (stacks.json 없으면 그쪽이 조용히 통과).
+# 활성화: bash .claude/scripts/setup-git-hooks.sh  (core.hooksPath=.claude/githooks)
+# 우회:   git push --no-verify
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+GATE="$ROOT/.claude/hooks/pre-push.sh"
+[ -f "$GATE" ] || exit 0
+
+# git 이 훅에 넘긴 GIT_DIR 등을 지운다 — 남겨 두면 게이트 안의 도구(flutter·gradle 등)가
+# 자기 git 저장소 대신 이 저장소를 본다.
+cd "$ROOT" || exit 0
+# shellcheck disable=SC2046
+unset $(git rev-parse --local-env-vars)
+
+exec bash "$GATE" --git-hook
