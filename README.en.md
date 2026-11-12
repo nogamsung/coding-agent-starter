@@ -10,7 +10,7 @@
 
 [![Claude](https://img.shields.io/badge/Claude-Code-FF6B35?logo=anthropic&logoColor=white)](https://claude.ai/code)
 [![Codex](https://img.shields.io/badge/OpenAI-Codex-412991?logo=openai&logoColor=white)](https://developers.openai.com/codex)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.1-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 <br/>
@@ -29,14 +29,15 @@
 
 A starter that pre-configures **skills, agents, hooks, and templates** so you can immediately use coding agents (Claude Code · Codex) in a project. (formerly `claude-code-starter`)
 
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-en-dark.svg"><img src="docs/assets/architecture-en-light.svg" alt="One rule set read by both Claude Code and Codex" width="880"></picture></p>
+
 - **Shared by Claude Code and Codex** — one instruction file `AGENTS.md`, one skill set `.agents/skills/`, one hook set `.claude/hooks/`. Install with `--platform claude|codex|both`
 - **Agent-agnostic gates** — git hooks (`.claude/githooks`) enforce build → test → coverage before push, gitleaks secret scanning and hub-checkout commit blocking from Claude, Codex, or a plain terminal. CI re-checks with the same scripts
 - **Worktree-first + safety guards** — the main checkout is a hub (source edits blocked), deleting dev/main and force pushes are blocked, deleting finished work branches needs no prompt
 - **Cross review** — `/pr` asks the *other* platform's model to review (Claude's work → Codex, and vice versa). `/handoff` passes work between agents
-
 - One-shot `/init` configures the harness for the detected stack
 - Specialized stack-specific subagents split generation, modification, and testing
-- **Dispatcher commands** — `/new`, `/plan`, `/review` consolidate all create / plan / review workflows
+- **Dispatcher skills** — `/new`, `/plan`, `/review` consolidate all create / plan / review workflows (`$new` etc. in Codex)
 - A `/rule` feedback loop accumulates rules into `AGENTS.md` whenever the AI slips, sharpening the harness over time
 - `memory/MEMORY.md` is auto-loaded at session start — past decisions and lessons are always in context
 - **Parallel work via Git Worktrees** — `/new worktree` lets you develop multiple features simultaneously
@@ -48,7 +49,8 @@ A starter that pre-configures **skills, agents, hooks, and templates** so you ca
 - **Planner agent** — `/plan` (or `/start`) turns a request into PRD + role-specific implementation prompts. Optional Agent Teams for parallel implementation.
 - **`/commit` → `/pr` → `/merge` chain** — each step proposes the next (executes upon acceptance). Not full automation but a "continuous confirmation" chain.
 
-**Supported stacks:** Kotlin Spring Boot · Next.js · Flutter · Go Gin · Python FastAPI
+**Supported stacks:** Kotlin Spring Boot · Next.js · Flutter · Go Gin · Python FastAPI (+ AI/ML) · Infra (Terraform · Kubernetes · Helm)
+**Code-free modes:** Marketing · Sales · Product
 
 > **v2.0.0 Breaking Change** — `CLAUDE.md` → `AGENTS.md`, commands → `.agents/skills/`. See the [v2 migration guide](#v2-migration-v1x--v200).
 
@@ -64,8 +66,8 @@ A starter that pre-configures **skills, agents, hooks, and templates** so you ca
 curl -fsSL https://raw.githubusercontent.com/nogamsung/coding-agent-starter/main/bootstrap.sh | bash
 ```
 
-- If `.claude/` does **not exist** → install mode — fresh install
-- If `.claude/` **exists** → update mode — **user custom assets are preserved by default** (v1.19.0+)
+- No harness yet → install mode; harness present → update mode — user assets are preserved by default
+- Platform is auto-detected from installed CLIs (`claude` only → claude, `codex` only → codex, both/none → both); later updates keep the recorded value
 
 **Options (pass arguments through curl | bash):**
 
@@ -81,7 +83,7 @@ curl -fsSL ...bootstrap.sh | bash -s -- --no-preserve         # replace user ass
 | `claude` | `.claude/settings.json` · `.claude/skills → ../.agents/skills` |
 | `codex` | `.codex/{config.toml,hooks.json,rules/,agents/}` (agents generated from `.claude/agents`) |
 
-Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not ship), `.claude/{agents,commands,hooks}/custom/`, `.claude/settings.local.json`, `.codex/config.toml`, your `.codex/rules/*`, `memory/`, `AGENTS.md`.
+Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not ship), `.claude/{agents,hooks}/custom/`, `.claude/commands/custom/` (v1 legacy), `.claude/settings.local.json`, `.codex/config.toml`, your `.codex/rules/*`, `memory/`, `AGENTS.md`.
 
 **Option B — Plugin marketplace** (Claude only, experimental)
 
@@ -90,25 +92,27 @@ Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not 
 /plugin install coding-agent-starter@coding-agent-starter
 ```
 
-> ⚠️ **Limitation**: the plugin path installs only `commands` · `agents` · `skills`. `hooks` · `templates` · `settings.json` · `memory/` are outside the plugin system, so **`bootstrap.sh` remains the primary entry point**. Use the plugin path when you only want a subset of assets.
+> ⚠️ The plugin path covers skills and agents only. Hooks, templates, settings and Codex config come from **`bootstrap.sh`**.
 
 **Option C — Update / rollback from inside the agent** (already-installed projects; in Codex use `$starter`)
 
 ```
-/starter check                      # Show current · latest · previous version
+/starter check                      # Show current · latest · previous version + platform
 /starter update                     # Update everything (custom assets preserved)
-/starter update --version v1.18.0   # Pin a specific tag
+/starter update --platform both     # Add Codex (switch platform)
+/starter update --version v2.0.0    # Pin a specific tag
 /starter rollback                   # Revert to the previous version
 
 /upgrade                            # Show category-by-category change stats (dry-run)
 /upgrade apply skills,hooks         # Selectively update some categories
-/upgrade --version v1.18.0          # Compare against a specific version
+/upgrade --version v2.0.0           # Compare against a specific version
+/upgrade optional archify           # Install an optional skill (optional-skills.json)
 
 /release patch                      # Bump VERSION + CHANGELOG + commit + auto /pr
 /release minor --dry-run            # Preview only
 ```
 
-> `/starter` does all-or-nothing updates; `/upgrade` updates partially by category (`agents` / `commands` / `skills` / `templates` / `hooks` / `settings`). Both preserve `custom/` + `settings.local.json`. `/release` is for maintainers cutting a new version of their own project (or the starter itself).
+> `/starter` does all-or-nothing updates; `/upgrade` updates partially by category (`agents` / `skills` / `hooks` / `githooks` / `scripts` / `templates` / `settings` / `codex`, plus `optional`). Both preserve `custom/` + `settings.local.json`. `/release` is for maintainers cutting a new version of their own project (or the starter itself).
 
 ### 2. Initialize a stack (Claude Code or Codex)
 
@@ -137,11 +141,14 @@ Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not 
 <summary>What <code>/init</code> does</summary>
 
 1. Auto-detect stack (when no argument given)
-2. Remove agents/templates/skills unrelated to the chosen stack (commands stay — dispatchers branch internally)
-3. Install `AGENTS.md` — architecture rules, conventions
-4. Install `.claude/settings.json` — stack-specific allowed commands + auto lint/test hooks
-5. Initialize `memory/MEMORY.md` — record after a project info interview
-6. Create the `dev` branch + register `.worktrees/` in gitignore
+2. Remove agents, templates and pattern skills unrelated to the chosen stack (workflow skills stay — dispatchers branch internally)
+3. Offer to migrate an existing `CLAUDE.md` to `AGENTS.md` (Claude Code ignores AGENTS.md while CLAUDE.md exists)
+4. Install `AGENTS.md` — architecture rules, conventions (shared by Claude and Codex)
+5. Install `.claude/settings.json` (platform `claude` / `both`) — stack-specific allowed commands + hooks. Codex uses the same hooks and rules via `.codex/`
+6. Create `.claude/stacks.json` (every mode) — the hooks' source of truth + `harness` options
+7. Set up git hooks (code modes, after confirmation) — `core.hooksPath=.claude/githooks`
+8. Initialize `memory/MEMORY.md` — record after a project info interview
+9. Create the `dev` branch + register `.worktrees/` in gitignore
 
 </details>
 
@@ -165,6 +172,8 @@ Preserved on update: `.agents/skills/<your-skill>/` (names the starter does not 
 ---
 
 ## Workflow
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/workflow-en-dark.svg"><img src="docs/assets/workflow-en-light.svg" alt="Feature flow: /start → /commit → /pr → CI → /merge → cleanup" width="880"></picture></p>
 
 ```
 /start <feature description>      # 1. Start a feature in one shot: worktree + PRD + auto-impl
@@ -200,22 +209,20 @@ main  ←──── dev  ←──── feature/{name}
 
 Each branch is created in `.worktrees/{type}-{name}/` as an isolated workspace.
 Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `test` · `perf`
-**Parallel work** across multiple terminals / Claude Code instances is supported.
+**Parallel work** across multiple terminals / Claude Code · Codex sessions is supported.
 
 > ⚠️ **Git branch naming constraint**: `dev` and `dev/feature-*` cannot coexist due to refs structure. Feature branches use independent prefixes (`feature/`, `fix/`, etc.) instead of `dev/`.
 
 ---
 
-## Skills (formerly commands)
+## Skills (17 workflow + 20 pattern)
 
-> v2.0.0 — commands moved to `.agents/skills/<name>/SKILL.md`. Call them as `/name` in Claude Code and `$name` in Codex. New: `/handoff`.
-
-> v1.18.0 — `/planner` was absorbed into `/plan` and a new single entry point `/start` was added.
-> v1.20.0~1.21.0 — `/upgrade` (selective diff) and `/release` (SemVer + CHANGELOG sync) added.
+> v2.0.0 — commands moved to `.agents/skills/<name>/SKILL.md`. Call them as `/name` in Claude Code and `$name` in Codex.
+> Skills with side effects (`init` · `rule` · `release` · `upgrade` · `starter` · `merge` · `handoff`) run only when called explicitly.
 
 ### Dispatchers (subcommands)
 
-| Command | Args | Description |
+| Skill | Args | Description |
 |---------|------|-------------|
 | `/new` | `<Name>` | **Auto-detect** — branch by stack (go/kotlin→api, nextjs→component, flutter→screen) or name pattern (`feature-*`→worktree, `ci\|release\|publish`→workflow) |
 | | `<sub> <Name>` (override) | Explicit `api` / `component` / `screen` / `module` / `workflow` / `worktree` |
@@ -234,9 +241,9 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 | `/review` | (none) / `<file>` / `staged` / `diff` | General code review |
 | | `api` | REST conventions · security · OpenAPI review |
 
-### Single commands
+### Single skills
 
-| Command | Description |
+| Skill | Description |
 |---------|-------------|
 | `/init [stack]` | Stack detection + harness configuration |
 | `/test [file]` | Auto-generate tests |
@@ -246,10 +253,19 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 | `/rule <description>` | Register an AI slip as a AGENTS.md rule |
 | `/memory [add\|search]` | Second Brain entry/search (full content auto-loads) |
 | `/marketing [category task\|natural language]` | Marketing router — branches 35 `marketing-skills:*` skills into 6 categories |
-| `/starter [check\|update\|rollback]` | Check / install / rollback the starter |
-| `/upgrade [diff\|apply <cat>]` | Category-level selective update vs latest starter (or `--version`) |
+| `/starter [check\|update\|rollback]` | Check / update / roll back the starter (`--platform` switches platform) |
+| `/upgrade [diff\|apply <cat>\|optional <name>]` | Category-level selective update vs latest starter (or `--version`), optional skill install |
 | `/release [patch\|minor\|major]` | SemVer bump + CHANGELOG sync + commit + auto `/pr` |
-| `/harness [check\|doctor\|dry-run\|size\|lint-settings]` | Validate / dry-run / suggest fixes for the harness (settings.json, hooks, agents) |
+| `/harness [check\|doctor\|dry-run\|size\|lint-settings]` | Validate / dry-run / suggest fixes for the harness (settings · .codex · hooks · agents · skills) |
+| `/handoff [clear]` | Handoff note for another agent (Claude ↔ Codex) or a new session — shown automatically at next session start |
+
+### Pattern skills (on-demand references)
+
+Agents read these themselves when doing the matching work. `/init` keeps only the ones for your stack.
+
+- **Stacks**: `kotlin-patterns` · `go-patterns` · `python-patterns` · `nextjs-patterns` · `flutter-patterns` · `ai-patterns` · `ai-eval-patterns`
+- **Design · infra**: `api-design-patterns` · `db-patterns` · `cache-patterns` · `docker-patterns` · `github-actions-patterns` · `terraform-patterns` · `kubernetes-patterns` · `helm-patterns`
+- **Cross-cutting**: `security-patterns` · `observability-patterns` · `ui-design-impl` · `motion-patterns` · `mcp-presets`
 
 ---
 
@@ -290,30 +306,36 @@ Types: `feature` · `fix` · `hotfix` · `refactor` · `chore` · `docs` · `tes
 
 ## Plugins (auto-installed by stack)
 
-### Common (all stacks)
+`/init` enables them via `enabledPlugins` in `.claude/settings.json` (Claude only). Each stack gets the minimum it needs.
 
-| Plugin | Description |
-|--------|-------------|
-| `github` | GitHub repo · PR · issue management |
-| `context7` | Auto-inject latest official docs context |
-| `feature-dev` | 7-step Explore→Design→Implement→Review |
-| `code-review` | Parallel 4-agent automated PR review |
-| `security-guidance` | Security warnings before risky commands |
-| `hookify` | Auto-register repeat slips as preventive hooks |
-| `commit-commands` | One-step commit · push · PR creation |
+### Common
 
-### Per-stack
+| Plugin | Applies to | Description |
+|--------|------------|-------------|
+| `github` | all modes | GitHub repo · PR · issue management |
+| `commit-commands` | all modes | One-step commit · push · PR creation |
+| `hookify` | all modes | Auto-register repeat slips as preventive hooks |
+| `feature-dev` | code stacks · infra | Step-by-step Explore → Design → Implement → Review |
 
-| Plugin | Stack | Description |
-|--------|-------|-------------|
+### Per stack / mode
+
+| Plugin | Stack / mode | Description |
+|--------|--------------|-------------|
 | `kotlin-lsp` | Kotlin | Real-time type errors · symbol references |
 | `typescript-lsp` | Next.js | TypeScript code intelligence |
 | `frontend-design` | Next.js | UI patterns · accessibility guide |
 | `playwright` | Next.js | E2E browser test automation |
+| `marketing-skills` | Marketing · Sales · Product | Copy · SEO · CRO · ads · sales skills |
+| `pm-*` (8) | Product | Discovery · strategy · execution · GTM · analytics PM skills |
+
+> Monorepo mode merges the plugins of its role stacks. The `claude-md-management` plugin (it creates `CLAUDE.md`) is never used and is blocked in CI.
 
 ---
 
 ## Auto hooks
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/hooks-en-dark.svg"><img src="docs/assets/hooks-en-light.svg" alt="When hooks run during a turn" width="880"></picture></p>
+
 
 One set of hook scripts in `.claude/hooks/` — Claude calls them from `settings.json`, Codex from `.codex/hooks.json`. Every hook exits silently without `.claude/stacks.json`; options live in its `harness` block.
 
@@ -327,9 +349,23 @@ One set of hook scripts in `.claude/hooks/` — Claude calls them from `settings
 | `pre-push.sh` + `build-gate.sh` | git push | build → scoped tests → coverage (`coverage-gate.py`, same as CI) | `buildGate` (true) · `coverage` (90) |
 | `memory-sync.sh` | session start/end | repo `memory/` as the source of truth, linked & committed | `memorySync` (off) |
 | `model-router.sh` | subagent spawn | picks a model tier by task difficulty (TypeSafe key) | `modelRouter` (off) |
+| `usage-counter.sh` | after tool use (Claude) | counts tool usage by name in local `.claude/.usage.json` only (nothing sent out) | `telemetry` (off) |
 | `codex-adapter.sh` | Codex only | turns `apply_patch` into per-file inputs for the hooks above | — |
 
-Git hooks: `bash .claude/scripts/setup-git-hooks.sh` (`core.hooksPath=.claude/githooks`).
+**Git hooks** (`bash .claude/scripts/setup-git-hooks.sh` → `core.hooksPath=.claude/githooks`): `pre-commit` = Codex agent sync check · gitleaks · hub-checkout source commit block, `pre-push` = the push gate above. Works from a plain terminal too.
+
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/push-gate-en-dark.svg"><img src="docs/assets/push-gate-en-light.svg" alt="Push gate: build → tests → coverage" width="880"></picture></p>
+
+
+**Manual tools**: `dev-smoke.sh smoke|up|down` (boot changed stacks + health check) · `timing.sh` (per-step timing log) · `cross-review.sh` (cross review).
+
+| Stack | Lint after edit | Turn-end tests | Push coverage |
+|-------|-----------------|----------------|---------------|
+| Kotlin | `ktlint` | `gradlew test` | JaCoCo ≥ 90% |
+| Next.js | `eslint` | `tsc` + `jest` | Jest ≥ 90% |
+| Flutter | `dart analyze` | `flutter test` | lcov ≥ 90% |
+| Go | `go vet` | `go vet` + `go test` | cover ≥ 90% |
+| Python | `ruff check` | `ruff` + `mypy` (+ pytest) | coverage.py ≥ 90% |
 
 ---
 
@@ -369,6 +405,7 @@ coding-agent-starter/
 │   └── .starter-{version,platform,skills}
 ├── .codex/                        # config.toml · hooks.json · rules/ · agents/*.toml (generated)
 ├── .github/workflows/             # auto-tag · install-matrix · harness-ci
+├── docs/assets/                   # animated README SVGs — generated by gen-diagrams.py, not installed
 ├── memory/MEMORY.md               # this repo's Second Brain
 ├── bootstrap.sh                   # install/update (--platform · --version · --no-preserve)
 ├── CHANGELOG.md

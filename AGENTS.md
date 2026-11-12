@@ -59,6 +59,7 @@
 bootstrap.sh             # 설치·업데이트 (--platform · --version · --no-preserve · STARTER_SRC=로컬 검증)
 VERSION                  # 스타터 버전
 memory/MEMORY.md         # 스타터 개발 second brain
+docs/assets/             # README 애니메이션 SVG — `python3 docs/assets/gen-diagrams.py` 로 재생성 (SVG 직접 수정 금지 · 배포 안 됨)
 ```
 
 ## 변경 시 체크포인트

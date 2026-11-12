@@ -32,7 +32,10 @@ REPO_URL="https://github.com/nogamsung/coding-agent-starter.git"
 TMP_DIR=$(mktemp -d)
 TARGET_DIR="$(pwd)"
 PRESERVE_DIR=$(mktemp -d)
-trap 'rm -rf "$TMP_DIR" "$PRESERVE_DIR"' EXIT
+# 임시 디렉토리 정리 실패가 설치 결과(exit code)를 바꾸지 않게 한다
+trap 'rm -rf "$TMP_DIR" "$PRESERVE_DIR" 2>/dev/null || true' EXIT
+# 임시 clone 에서 git 자동 gc/maintenance 가 백그라운드로 돌면 정리와 경합한다 (git ≥ 2.4x)
+GIT_TMP=(git -c gc.auto=0 -c maintenance.auto=false)
 
 # --- 인자 파싱 ---
 VERSION_REF=""
@@ -104,11 +107,11 @@ if [ -n "${STARTER_SRC:-}" ] && [ -z "$VERSION_REF" ]; then
     [ -e "$STARTER_SRC/$item" ] && cp -R "$STARTER_SRC/$item" "$TMP_DIR/"
   done
 else
-  git clone --quiet --depth=1 "$REPO_URL" "$TMP_DIR" 2>/dev/null
+  "${GIT_TMP[@]}" clone --quiet --depth=1 "$REPO_URL" "$TMP_DIR" 2>/dev/null
 fi
 if [ -n "$VERSION_REF" ]; then
   # depth=1 클론엔 임의 ref 없으니 다시 fetch
-  (cd "$TMP_DIR" && git fetch --quiet --depth=1 origin "$VERSION_REF" 2>/dev/null && git checkout --quiet FETCH_HEAD) || {
+  (cd "$TMP_DIR" && "${GIT_TMP[@]}" fetch --quiet --depth=1 origin "$VERSION_REF" 2>/dev/null && "${GIT_TMP[@]}" checkout --quiet FETCH_HEAD) || {
     echo "❌ 버전 ref '$VERSION_REF' 를 origin 에서 찾지 못했습니다."
     echo "   사용 가능한 태그: https://github.com/nogamsung/coding-agent-starter/tags"
     exit 1

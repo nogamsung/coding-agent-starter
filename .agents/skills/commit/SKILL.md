@@ -111,10 +111,9 @@ Conventional Commits 규칙에 따라 커밋을 생성합니다.
 
 | 변경 대상 | 업데이트할 README 섹션 |
 |----------|----------------------|
-| `.claude/commands/` 신규 파일 | **커맨드** 표에 행 추가 |
+| `.agents/skills/` 신규 skill | **Skill** 표에 행 추가 + **디렉토리 구조** 목록에 추가 |
 | `.claude/agents/` 신규 파일 | **Agents** 표에 행 추가 |
-| `.agents/skills/` 신규 파일 | **디렉토리 구조** 목록에 추가 |
-| `.claude/commands/` 신규 파일 | **디렉토리 구조** 목록에 추가 |
+| `.claude/hooks/` 신규 훅 | **자동 훅** 표에 행 추가 |
 | VERSION 변경 | 뱃지 버전 번호 (`version-X.X.X-blue`) 및 구조 섹션 버전 업데이트 |
 
 ### 3. memory/MEMORY.md 업데이트
