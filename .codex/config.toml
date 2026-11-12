@@ -1,0 +1,11 @@
+# Coding Agent Starter — 프로젝트 Codex 설정 (Claude 쪽 짝은 .claude/settings.json)
+# 지침은 루트 AGENTS.md, skill 은 .agents/skills/, 서브에이전트는 .codex/agents/*.toml(생성물),
+# 훅은 .codex/hooks.json → .claude/hooks/*.sh (Claude 와 같은 스크립트), 명령 규칙은 .codex/rules/*.rules.
+
+[sandbox_workspace_write]
+# 패키지 설치·gh 호출 등에 필요. 막으려면 false.
+network_access = true
+
+# MCP 서버는 .agents/skills/mcp-presets/SKILL.md 참고해 필요한 것만 추가:
+# [mcp_servers.<name>]
+# url = "https://..."

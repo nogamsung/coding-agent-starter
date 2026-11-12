@@ -1,6 +1,7 @@
 ---
 name: kotlin-tester
 model: haiku
+effort: medium
 description: Kotlin Spring Boot 테스트 — Service(MockK), Controller(@WebMvcTest), Repository(@DataJpaTest), 통합 테스트 작성.
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: go-generator
 model: sonnet
+effort: medium
 description: Go Gin 새 코드 생성 전문 에이전트. 새 Domain Entity, Repository, UseCase, Handler, Migration 파일을 처음부터 만들 때 사용.
 ---
 

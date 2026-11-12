@@ -1,6 +1,7 @@
 ---
 name: ai-researcher
 model: opus
+effort: high
 description: AI/ML 리서치 전담 — 논문·모델·프레임워크 비교, 실험 설계, 벤치마크 조사. 코드 미작성. PyTorch/HuggingFace/LangChain/Anthropic·OpenAI SDK 에코시스템.
 tools: Read, Glob, Grep, WebFetch, WebSearch, Skill
 ---

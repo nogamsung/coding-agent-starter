@@ -1,6 +1,7 @@
 ---
 name: nextjs-modifier
 model: sonnet
+effort: medium
 description: Next.js 기존 코드 수정/리팩토링 전문 에이전트. 기존 컴포넌트에 기능 추가, props 변경, 스타일 수정, Server→Client 전환, 성능 최적화 시 사용.
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: go-tester
 model: haiku
+effort: medium
 description: Go Gin 테스트 코드 작성 전문 에이전트. UseCase 단위 테스트(mockery), Handler 테스트(httptest), Repository 통합 테스트 작성 시 사용.
 ---
 

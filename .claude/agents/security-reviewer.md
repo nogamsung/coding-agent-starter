@@ -1,6 +1,7 @@
 ---
 name: security-reviewer
 model: opus
+effort: high
 description: 모든 기능 완료 시점에서 보안 리뷰 수행 — OWASP Top 10, 인증·인가 흐름, 시크릿 유출, 의존성 CVE, SQL injection/XSS/CSRF. `/pr` 단계에서 자동 호출됨.
 tools: Read, Glob, Grep, Bash, Skill
 ---

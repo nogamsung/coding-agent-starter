@@ -1,6 +1,7 @@
 ---
 name: infra-generator
 model: sonnet
+effort: medium
 description: Terraform 모듈 · Kubernetes manifest · Helm chart 생성 에이전트. 새 인프라 리소스를 처음부터 만들 때 사용.
 ---
 

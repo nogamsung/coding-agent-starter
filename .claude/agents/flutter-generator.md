@@ -1,6 +1,7 @@
 ---
 name: flutter-generator
 model: sonnet
+effort: medium
 description: Flutter 새 코드 생성 전문 에이전트. 새 Screen, Widget, Riverpod Provider, Repository, Freezed 모델, GoRouter 라우트를 처음부터 만들 때 사용.
 ---
 

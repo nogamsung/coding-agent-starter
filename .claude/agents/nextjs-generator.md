@@ -1,6 +1,7 @@
 ---
 name: nextjs-generator
 model: sonnet
+effort: medium
 description: Next.js 새 코드 생성 전문 에이전트. 새 페이지, 컴포넌트, API Route, 훅, Zustand 스토어, 타입 정의를 처음부터 만들 때 사용.
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: ui-designer
 model: sonnet
+effort: medium
 description: DESIGN.md 기반 UI 디자인 시스템 전담 — DESIGN.md 설치/유지, 디자인 토큰을 Tailwind config (Next.js) 또는 ThemeData (Flutter) 로 구현. Stripe/Linear 스타일 적용, 컴포넌트의 토큰 준수 검증.
 ---
 

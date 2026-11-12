@@ -1,0 +1,85 @@
+# Coding Agent Starter — Codex 명령 규칙 (execpolicy). Claude 쪽 짝은 .claude/settings.json 의 permissions.
+# decision 생략 = allow(샌드박스 밖에서도 묻지 않음) · "prompt" = 매번 묻기 · "forbidden" = 차단.
+# 여러 규칙이 겹치면 가장 엄한 결정이 이긴다. 프로젝트 전용 규칙은 이 디렉토리에 <name>.rules 로 추가.
+
+prefix_rule(
+    pattern = ["git", ["fetch", "pull", "push", "add", "commit", "worktree", "switch", "checkout", "rebase", "merge", "branch", "status", "diff", "log", "show", "stash", "tag"]],
+    match = ["git fetch origin", "git push -u origin feature/x", "git worktree add .worktrees/x -b feature/x"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["--force", "-f", "--force-with-lease"]],
+    decision = "forbidden",
+    justification = "force push 금지 — 새 커밋으로 고친다",
+    match = ["git push --force origin main", "git push -f"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", ["--delete", "-d"], ["dev", "main", "master"]],
+    decision = "forbidden",
+    justification = "dev·main 브랜치 삭제 금지 — 끝난 작업 브랜치만 지운다",
+    match = ["git push origin --delete main"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", [":dev", ":main", ":master"]],
+    decision = "forbidden",
+    justification = "dev·main 브랜치 삭제 금지",
+    match = ["git push origin :main"],
+)
+
+prefix_rule(
+    pattern = ["git", "branch", ["-d", "-D", "--delete"], ["dev", "main", "master"]],
+    decision = "forbidden",
+    justification = "dev·main 브랜치 삭제 금지",
+    match = ["git branch -D main"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr"], ["/", "~", "/*"]],
+    decision = "forbidden",
+    justification = "루트·홈 삭제 금지",
+    match = ["rm -rf /", "rm -rf ~"],
+)
+
+prefix_rule(
+    pattern = ["gh", ["secret", "variable"], ["set", "delete"]],
+    decision = "prompt",
+    justification = "저장소 시크릿·변수 변경은 사람 확인",
+    match = ["gh secret set TOKEN", "gh variable delete X"],
+)
+
+prefix_rule(
+    pattern = ["gh", "workflow", "run"],
+    decision = "prompt",
+    justification = "워크플로 수동 실행은 사람 확인",
+    match = ["gh workflow run deploy.yml"],
+)
+
+prefix_rule(
+    pattern = ["gh", ["pr", "run", "issue"]],
+    match = ["gh pr checks 12 --watch", "gh run view 123 --log-failed"],
+)
+
+prefix_rule(
+    pattern = [["./gradlew", "./mvnw", "go", "pnpm", "npm", "npx", "yarn", "uv", "poetry", "pytest", "flutter", "dart"]],
+    match = ["./gradlew test", "pnpm run build", "flutter test", "go test ./..."],
+)
+
+prefix_rule(
+    pattern = ["bash", [
+        ".claude/hooks/build-gate.sh",
+        ".claude/hooks/dev-smoke.sh",
+        ".claude/hooks/pre-push.sh",
+        ".claude/hooks/memory-sync.sh",
+        ".claude/scripts/cross-review.sh",
+        ".claude/scripts/setup-git-hooks.sh",
+        ".claude/scripts/init-cleanup.sh",
+    ]],
+    match = ["bash .claude/hooks/dev-smoke.sh smoke", "bash .claude/scripts/init-cleanup.sh kotlin"],
+)
+
+prefix_rule(
+    pattern = ["python3", [".claude/scripts/coverage-gate.py", ".claude/scripts/gen-codex-agents.py"]],
+    match = ["python3 .claude/scripts/gen-codex-agents.py"],
+)

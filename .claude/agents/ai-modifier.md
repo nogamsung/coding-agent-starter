@@ -1,6 +1,7 @@
 ---
 name: ai-modifier
 model: sonnet
+effort: medium
 description: 기존 AI/ML 코드 수정·리팩토링·튜닝 전담. 프롬프트 개선, chain 수정, 모델 교체, 성능 최적화. FastAPI embedded 구조 유지.
 ---
 

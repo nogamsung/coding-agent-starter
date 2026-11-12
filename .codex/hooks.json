@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/codex-adapter.sh\" session-start" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "^spawn_agent$", "hooks": [
+        { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/model-router.sh\" codex" }
+      ] },
+      { "matcher": "Bash", "hooks": [
+        { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/safety-guard.sh\"" },
+        { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/pre-push.sh\"" }
+      ] },
+      { "matcher": "apply_patch", "hooks": [
+        { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/codex-adapter.sh\" pre-edit" }
+      ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "apply_patch", "hooks": [
+        { "type": "command", "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/codex-adapter.sh\" post-edit" }
+      ] }
+    ]
+  }
+}

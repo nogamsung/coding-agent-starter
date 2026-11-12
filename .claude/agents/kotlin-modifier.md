@@ -1,6 +1,7 @@
 ---
 name: kotlin-modifier
 model: sonnet
+effort: medium
 description: Kotlin Spring Boot 기존 코드 수정/리팩토링 전문 에이전트. 기존 파일에 기능 추가, 필드 변경, 리팩토링, 의존성 업데이트 시 사용.
 ---
 

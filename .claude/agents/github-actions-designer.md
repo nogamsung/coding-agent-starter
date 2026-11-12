@@ -1,6 +1,7 @@
 ---
 name: github-actions-designer
 model: sonnet
+effort: medium
 description: GitHub Actions 워크플로 설계 전문 에이전트. CI/CD 파이프라인, 릴리스 자동화, 버전·패키지 관리 워크플로를 생성·수정할 때 사용.
 ---
 
